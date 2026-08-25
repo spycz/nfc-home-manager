@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@(ViewData["Title"] as string ?? "NFC domácnost")</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <header class="topbar">
+            <a class="brand" href="/">NFC domácnost</a>
+            <nav>
+                <a href="/">Přehled</a>
+                <a href="/Polozky">Položky</a>
+                <a href="/Mistnosti">Místnosti</a>
+                <a href="/Kategorie">Kategorie</a>
+            </nav>
+            <form method="post" action="/admin/logout" class="logout-form">
+                <button type="submit">Odhlásit</button>
+            </form>
+        </header>
+    }
+    <main class="content">
+        @RenderBody()
+    </main>
+</body>
+</html>

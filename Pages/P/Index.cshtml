@@ -1,0 +1,83 @@
+@page "{kod}"
+@model NfcHomeManager.Pages.P.IndexModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.Polozka?.Nazev ?? "Položka nenalezena";
+}
+
+@if (Model.Polozka is null)
+{
+    <div class="card public-item">
+        <h1>Položka nenalezena</h1>
+        <p class="muted">Tento NFC štítek neodpovídá žádné evidované položce.</p>
+    </div>
+}
+else
+{
+    var p = Model.Polozka;
+    <div class="card public-item">
+        <p class="muted">@(p.Kategorie?.Nazev ?? "bez kategorie") · @(p.Mistnost?.Nazev ?? "bez místnosti")</p>
+        <h1>@p.Nazev</h1>
+
+        <table>
+            <tbody>
+                @if (!string.IsNullOrWhiteSpace(p.Vyrobce) || !string.IsNullOrWhiteSpace(p.Model))
+                {
+                    <tr><th>Výrobce / typ</th><td>@p.Vyrobce @p.Model</td></tr>
+                }
+                @if (!string.IsNullOrWhiteSpace(p.SerioveCislo))
+                {
+                    <tr><th>Sériové číslo</th><td>@p.SerioveCislo</td></tr>
+                }
+                @if (p.DatumPorizeni.HasValue)
+                {
+                    <tr><th>Pořízeno</th><td>@p.DatumPorizeni.Value.ToString("d.M.yyyy")</td></tr>
+                }
+                @if (p.ZarukaDo.HasValue)
+                {
+                    <tr>
+                        <th>Záruka do</th>
+                        <td>
+                            <span class="badge @(p.ZarukaDo < DateOnly.FromDateTime(DateTime.Today) ? "badge--overdue" : "badge--ok")">
+                                @p.ZarukaDo.Value.ToString("d.M.yyyy")
+                            </span>
+                        </td>
+                    </tr>
+                }
+                @if (p.DalsiServisDo.HasValue)
+                {
+                    <tr><th>Příští servis</th><td>@p.DalsiServisDo.Value.ToString("d.M.yyyy")</td></tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!string.IsNullOrWhiteSpace(p.Poznamka))
+        {
+            <p><strong>Poznámka:</strong> @p.Poznamka</p>
+        }
+
+        @if (p.ServisniZaznamy.Count > 0)
+        {
+            <h3>Historie servisu</h3>
+            <table>
+                <tbody>
+                    @foreach (var s in p.ServisniZaznamy)
+                    {
+                        <tr>
+                            <td>@s.Datum.ToString("d.M.yyyy")</td>
+                            <td>@s.Typ</td>
+                            <td>@s.Popis</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="actions">
+                <a class="btn btn--secondary" href="/Polozky/Detail?id=@p.Id">Otevřít v administraci</a>
+            </div>
+        }
+    </div>
+}

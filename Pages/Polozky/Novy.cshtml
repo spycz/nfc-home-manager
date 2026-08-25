@@ -1,0 +1,19 @@
+@page
+@model NfcHomeManager.Pages.Polozky.NovyModel
+@{
+    ViewData["Title"] = "Nová položka";
+}
+
+<h1>Nová položka</h1>
+
+<div class="card">
+    <form method="post">
+        <div asp-validation-summary="All" class="alert alert--error"></div>
+        <partial name="_PolozkaFormFields" for="Input" view-data="ViewData" />
+
+        <div class="actions">
+            <button class="btn" type="submit">Uložit</button>
+            <a class="btn btn--secondary" href="/Polozky">Zrušit</a>
+        </div>
+    </form>
+</div>

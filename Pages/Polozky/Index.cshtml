@@ -1,0 +1,75 @@
+@page
+@model NfcHomeManager.Pages.Polozky.IndexModel
+@{
+    ViewData["Title"] = "Položky";
+}
+
+<h1>Položky</h1>
+
+<div class="card">
+    <form method="get" class="inline">
+        <div class="field">
+            <label for="q">Hledat</label>
+            <input id="q" type="text" name="q" value="@Model.Q" placeholder="název, výrobce, sériové číslo…" />
+        </div>
+        <div class="field">
+            <label for="kategorieId">Kategorie</label>
+            <select id="kategorieId" name="kategorieId">
+                <option value="">Vše</option>
+                @foreach (var k in Model.VsechnyKategorie)
+                {
+                    <option value="@k.Id" selected="@(Model.KategorieId == k.Id)">@k.Nazev</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="mistnostId">Místnost</label>
+            <select id="mistnostId" name="mistnostId">
+                <option value="">Vše</option>
+                @foreach (var m in Model.VsechnyMistnosti)
+                {
+                    <option value="@m.Id" selected="@(Model.MistnostId == m.Id)">@m.Nazev</option>
+                }
+            </select>
+        </div>
+        <button class="btn" type="submit">Filtrovat</button>
+        <a class="btn btn--secondary" href="/Polozky">Zrušit filtr</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="actions" style="margin-bottom:1rem;">
+        <a class="btn" href="/Polozky/Novy">+ Nová položka</a>
+    </div>
+
+    @if (Model.Polozky.Count == 0)
+    {
+        <p class="muted">Žádné položky neodpovídají filtru.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Název</th>
+                    <th>Kategorie</th>
+                    <th>Místnost</th>
+                    <th>Kód</th>
+                    <th>Záruka do</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Polozky)
+                {
+                    <tr>
+                        <td><a href="/Polozky/Detail?id=@p.Id">@p.Nazev</a></td>
+                        <td>@(p.Kategorie?.Nazev ?? "—")</td>
+                        <td>@(p.Mistnost?.Nazev ?? "—")</td>
+                        <td><code>@p.Kod</code></td>
+                        <td>@(p.ZarukaDo?.ToString("d.M.yyyy") ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

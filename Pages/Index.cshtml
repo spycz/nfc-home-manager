@@ -1,0 +1,48 @@
+@page
+@model NfcHomeManager.Pages.IndexModel
+@using NfcHomeManager.Services
+@{
+    ViewData["Title"] = "Přehled";
+}
+
+<h1>Přehled domácnosti</h1>
+
+<div class="card">
+    <p><strong>@Model.PocetPolozek</strong> aktivních položek · <strong>@Model.PocetMistnosti</strong> místností</p>
+    <div class="actions">
+        <a class="btn" href="/Polozky/Novy">+ Nová položka</a>
+        <a class="btn btn--secondary" href="/Polozky">Všechny položky</a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Blížící se termíny</h2>
+    @if (Model.Upozorneni.Count == 0)
+    {
+        <p class="muted">Nic v nejbližších 60 dnech.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Položka</th>
+                    <th>Co</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Upozorneni)
+                {
+                    <tr>
+                        <td>
+                            <span class="badge @(u.JeProsle ? "badge--overdue" : "")">@u.Datum.ToString("d.M.yyyy")</span>
+                        </td>
+                        <td><a href="/Polozky/Detail?id=@u.Polozka.Id">@u.Polozka.Nazev</a></td>
+                        <td>@u.Popis</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

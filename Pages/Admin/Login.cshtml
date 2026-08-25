@@ -1,0 +1,39 @@
+@page
+@model NfcHomeManager.Pages.Admin.LoginModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>NFC domácnost · přihlášení</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    <main class="content" style="max-width:360px;margin-top:4rem;">
+        <div class="card">
+            <h1>Přihlášení</h1>
+
+            @if (!string.IsNullOrEmpty(Model.Error))
+            {
+                <div class="alert alert--error">@Model.Error</div>
+            }
+
+            <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                <div class="field">
+                    <label for="Username">Jméno</label>
+                    <input id="Username" type="text" name="Username" autocomplete="username" autofocus />
+                </div>
+                <div class="field">
+                    <label for="Password">Heslo</label>
+                    <input id="Password" type="password" name="Password" autocomplete="current-password" />
+                </div>
+                <button class="btn" type="submit">Přihlásit</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=App_Data/nfc-home.db;Foreign Keys=True"
+  },
+  "AdminAuth": {
+    "Username": "admin",
+    "PasswordHash": "CHANGE_ME - vygeneruj: dotnet run -- hash-password TvojeHeslo"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "nfc.scitani1921.cz"
+}

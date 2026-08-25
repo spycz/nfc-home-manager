@@ -1,0 +1,43 @@
+@page
+@model NfcHomeManager.Pages.Kategorie.IndexModel
+@{
+    ViewData["Title"] = "Kategorie";
+}
+
+<h1>Kategorie</h1>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Název</th>
+                <th>Počet položek</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var k in Model.Kategorie)
+            {
+                <tr>
+                    <td>@k.Nazev</td>
+                    <td>@k.Polozky.Count</td>
+                    <td>
+                        <form method="post" asp-page-handler="Smazat" onsubmit="return confirm('Smazat kategorii? Položky zůstanou, jen se odpojí od kategorie.');">
+                            <input type="hidden" name="id" value="@k.Id" />
+                            <button class="btn btn--secondary" type="submit">Smazat</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>Přidat kategorii</h3>
+    <form method="post" asp-page-handler="Pridat" class="inline">
+        <div class="field">
+            <label for="NovyNazev">Název</label>
+            <input id="NovyNazev" type="text" asp-for="NovyNazev" />
+        </div>
+        <button class="btn" type="submit">Přidat</button>
+    </form>
+</div>

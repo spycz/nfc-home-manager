@@ -1,0 +1,74 @@
+@model NfcHomeManager.Pages.Polozky.PolozkaFormInput
+@{
+    var vsechnyKategorie = (List<NfcHomeManager.Models.Kategorie>)ViewData["VsechnyKategorie"]!;
+    var vsechnyMistnosti = (List<NfcHomeManager.Models.Mistnost>)ViewData["VsechnyMistnosti"]!;
+}
+
+<div class="form-grid">
+    <div class="field">
+        <label for="Input_Nazev">Název *</label>
+        <input id="Input_Nazev" type="text" asp-for="Nazev" required />
+    </div>
+    <div class="field">
+        <label for="Input_NfcUid">UID NFC štítku</label>
+        <input id="Input_NfcUid" type="text" asp-for="NfcUid" placeholder="volitelné" />
+    </div>
+
+    <div class="field">
+        <label for="Input_KategorieId">Kategorie</label>
+        <select id="Input_KategorieId" asp-for="KategorieId">
+            <option value="">— nezařazeno —</option>
+            @foreach (var k in vsechnyKategorie)
+            {
+                <option value="@k.Id">@k.Nazev</option>
+            }
+        </select>
+    </div>
+    <div class="field">
+        <label for="Input_MistnostId">Místnost</label>
+        <select id="Input_MistnostId" asp-for="MistnostId">
+            <option value="">— nezařazeno —</option>
+            @foreach (var m in vsechnyMistnosti)
+            {
+                <option value="@m.Id">@m.Nazev</option>
+            }
+        </select>
+    </div>
+
+    <div class="field">
+        <label for="Input_Vyrobce">Výrobce</label>
+        <input id="Input_Vyrobce" type="text" asp-for="Vyrobce" />
+    </div>
+    <div class="field">
+        <label for="Input_Model">Typ / model</label>
+        <input id="Input_Model" type="text" asp-for="Model" />
+    </div>
+
+    <div class="field">
+        <label for="Input_SerioveCislo">Sériové číslo</label>
+        <input id="Input_SerioveCislo" type="text" asp-for="SerioveCislo" />
+    </div>
+    <div class="field">
+        <label for="Input_DatumPorizeni">Datum pořízení</label>
+        <input id="Input_DatumPorizeni" type="date" asp-for="DatumPorizeni" />
+    </div>
+
+    <div class="field">
+        <label for="Input_CenaKc">Cena (Kč)</label>
+        <input id="Input_CenaKc" type="number" step="0.01" min="0" asp-for="CenaKc" />
+    </div>
+    <div class="field">
+        <label for="Input_ZarukaMesice">Záruka (měsíců)</label>
+        <input id="Input_ZarukaMesice" type="number" min="0" max="240" asp-for="ZarukaMesice" />
+    </div>
+
+    <div class="field">
+        <label for="Input_DalsiServisDo">Příští plánovaný servis</label>
+        <input id="Input_DalsiServisDo" type="date" asp-for="DalsiServisDo" />
+    </div>
+</div>
+
+<div class="field">
+    <label for="Input_Poznamka">Poznámka</label>
+    <textarea id="Input_Poznamka" asp-for="Poznamka"></textarea>
+</div>

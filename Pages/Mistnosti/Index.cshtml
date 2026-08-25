@@ -1,0 +1,43 @@
+@page
+@model NfcHomeManager.Pages.Mistnosti.IndexModel
+@{
+    ViewData["Title"] = "Místnosti";
+}
+
+<h1>Místnosti</h1>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Název</th>
+                <th>Počet položek</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.Mistnosti)
+            {
+                <tr>
+                    <td>@m.Nazev</td>
+                    <td>@m.Polozky.Count</td>
+                    <td>
+                        <form method="post" asp-page-handler="Smazat" onsubmit="return confirm('Smazat místnost? Položky zůstanou, jen se odpojí od místnosti.');">
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <button class="btn btn--secondary" type="submit">Smazat</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>Přidat místnost</h3>
+    <form method="post" asp-page-handler="Pridat" class="inline">
+        <div class="field">
+            <label for="NovyNazev">Název</label>
+            <input id="NovyNazev" type="text" asp-for="NovyNazev" />
+        </div>
+        <button class="btn" type="submit">Přidat</button>
+    </form>
+</div>

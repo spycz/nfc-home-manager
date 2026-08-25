@@ -1,0 +1,219 @@
+@page
+@model NfcHomeManager.Pages.Polozky.DetailModel
+@using NfcHomeManager.Models
+@{
+    ViewData["Title"] = Model.Polozka.Nazev;
+}
+
+<h1>@Model.Polozka.Nazev</h1>
+
+<div class="card">
+    <p>
+        @(Model.Polozka.Kategorie?.Nazev ?? "bez kategorie") ·
+        @(Model.Polozka.Mistnost?.Nazev ?? "bez místnosti")
+    </p>
+
+    <table>
+        <tbody>
+            <tr><th>Výrobce</th><td>@(Model.Polozka.Vyrobce ?? "—")</td></tr>
+            <tr><th>Typ / model</th><td>@(Model.Polozka.Model ?? "—")</td></tr>
+            <tr><th>Sériové číslo</th><td>@(Model.Polozka.SerioveCislo ?? "—")</td></tr>
+            <tr><th>NFC UID</th><td>@(Model.Polozka.NfcUid ?? "—")</td></tr>
+            <tr><th>Datum pořízení</th><td>@(Model.Polozka.DatumPorizeni?.ToString("d.M.yyyy") ?? "—")</td></tr>
+            <tr><th>Cena</th><td>@(Model.Polozka.CenaKc?.ToString("N0") is { } cena ? $"{cena} Kč" : "—")</td></tr>
+            <tr>
+                <th>Záruka do</th>
+                <td>
+                    @(Model.Polozka.ZarukaDo?.ToString("d.M.yyyy") ?? "—")
+                    (@Model.Polozka.ZarukaMesice měsíců)
+                </td>
+            </tr>
+            <tr><th>Příští servis</th><td>@(Model.Polozka.DalsiServisDo?.ToString("d.M.yyyy") ?? "—")</td></tr>
+        </tbody>
+    </table>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Polozka.Poznamka))
+    {
+        <p><strong>Poznámka:</strong> @Model.Polozka.Poznamka</p>
+    }
+
+    <div class="actions">
+        <a class="btn btn--secondary" href="/Polozky/Upravit?id=@Model.Polozka.Id">Upravit</a>
+        <form method="post" asp-page-handler="SmazatPolozku" onsubmit="return confirm('Opravdu smazat tuto položku včetně historie servisu a pojištění?');" style="display:inline;">
+            <input type="hidden" name="id" value="@Model.Polozka.Id" />
+            <button class="btn btn--danger" type="submit">Smazat</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Odkaz pro NFC štítek (NTAG215)</h2>
+    <p class="muted">Tento odkaz zapiš do NFC štítku (např. aplikací NFC Tools) jako NDEF URI záznam. Po přiložení telefonu se otevře veřejná stránka položky bez nutnosti přihlášení.</p>
+    <div class="nfc-url">
+        <input type="text" readonly value="@Model.VerejnaUrl" id="nfc-url" onclick="this.select()" />
+        <button type="button" class="btn btn--secondary" onclick="navigator.clipboard.writeText(document.getElementById('nfc-url').value)">Kopírovat</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Servis a opravy</h2>
+
+    @if (Model.Polozka.ServisniZaznamy.Count == 0)
+    {
+        <p class="muted">Zatím žádný záznam.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Typ</th>
+                    <th>Popis</th>
+                    <th>Cena</th>
+                    <th>Provozovna</th>
+                    <th>Příští termín</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Polozka.ServisniZaznamy)
+                {
+                    <tr>
+                        <td>@s.Datum.ToString("d.M.yyyy")</td>
+                        <td>@s.Typ</td>
+                        <td>@s.Popis</td>
+                        <td>@(s.CenaKc?.ToString("N0") is { } c ? $"{c} Kč" : "—")</td>
+                        <td>@(s.Provozovna ?? "—")</td>
+                        <td>@(s.DalsiTerminDo?.ToString("d.M.yyyy") ?? "—")</td>
+                        <td>
+                            <form method="post" asp-page-handler="SmazatServis" onsubmit="return confirm('Smazat záznam?');">
+                                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                <input type="hidden" name="servisId" value="@s.Id" />
+                                <button class="btn btn--secondary" type="submit">Smazat</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <h3>Přidat záznam</h3>
+    <form method="post" asp-page-handler="PridatServis">
+        <input type="hidden" name="id" value="@Model.Polozka.Id" />
+        <div class="form-grid">
+            <div class="field">
+                <label for="NovyServis_Datum">Datum *</label>
+                <input id="NovyServis_Datum" type="date" asp-for="NovyServis.Datum" />
+            </div>
+            <div class="field">
+                <label for="NovyServis_Typ">Typ</label>
+                <select id="NovyServis_Typ" asp-for="NovyServis.Typ">
+                    @foreach (var typ in Enum.GetValues<ServisTyp>())
+                    {
+                        <option value="@typ">@typ</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label for="NovyServis_CenaKc">Cena (Kč)</label>
+                <input id="NovyServis_CenaKc" type="number" step="0.01" min="0" asp-for="NovyServis.CenaKc" />
+            </div>
+            <div class="field">
+                <label for="NovyServis_Provozovna">Provozovna</label>
+                <input id="NovyServis_Provozovna" type="text" asp-for="NovyServis.Provozovna" />
+            </div>
+            <div class="field">
+                <label for="NovyServis_DalsiTerminDo">Příští termín (servis/STK)</label>
+                <input id="NovyServis_DalsiTerminDo" type="date" asp-for="NovyServis.DalsiTerminDo" />
+            </div>
+        </div>
+        <div class="field">
+            <label for="NovyServis_Popis">Popis *</label>
+            <textarea id="NovyServis_Popis" asp-for="NovyServis.Popis"></textarea>
+            <span asp-validation-for="NovyServis.Popis" class="muted" style="color:var(--danger);"></span>
+        </div>
+        <button class="btn" type="submit">Přidat záznam</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Pojištění</h2>
+
+    @if (Model.Polozka.Pojisteni.Count == 0)
+    {
+        <p class="muted">Zatím žádné pojištění.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Pojišťovna</th>
+                    <th>Typ</th>
+                    <th>Číslo smlouvy</th>
+                    <th>Platnost</th>
+                    <th>Roční cena</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var i in Model.Polozka.Pojisteni)
+                {
+                    <tr>
+                        <td>@i.Pojistovna</td>
+                        <td>@(i.Typ ?? "—")</td>
+                        <td>@(i.CisloSmlouvy ?? "—")</td>
+                        <td>@(i.PlatnostOd?.ToString("d.M.yyyy") ?? "?") – @(i.PlatnostDo?.ToString("d.M.yyyy") ?? "?")</td>
+                        <td>@(i.RocniCenaKc?.ToString("N0") is { } r ? $"{r} Kč" : "—")</td>
+                        <td>
+                            <form method="post" asp-page-handler="SmazatPojisteni" onsubmit="return confirm('Smazat pojištění?');">
+                                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                <input type="hidden" name="pojisteniId" value="@i.Id" />
+                                <button class="btn btn--secondary" type="submit">Smazat</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <h3>Přidat pojištění</h3>
+    <form method="post" asp-page-handler="PridatPojisteni">
+        <input type="hidden" name="id" value="@Model.Polozka.Id" />
+        <div class="form-grid">
+            <div class="field">
+                <label for="NovePojisteni_Pojistovna">Pojišťovna *</label>
+                <input id="NovePojisteni_Pojistovna" type="text" asp-for="NovePojisteni.Pojistovna" />
+                <span asp-validation-for="NovePojisteni.Pojistovna" class="muted" style="color:var(--danger);"></span>
+            </div>
+            <div class="field">
+                <label for="NovePojisteni_Typ">Typ (např. povinné ručení, havarijní)</label>
+                <input id="NovePojisteni_Typ" type="text" asp-for="NovePojisteni.Typ" />
+            </div>
+            <div class="field">
+                <label for="NovePojisteni_CisloSmlouvy">Číslo smlouvy</label>
+                <input id="NovePojisteni_CisloSmlouvy" type="text" asp-for="NovePojisteni.CisloSmlouvy" />
+            </div>
+            <div class="field">
+                <label for="NovePojisteni_RocniCenaKc">Roční cena (Kč)</label>
+                <input id="NovePojisteni_RocniCenaKc" type="number" step="0.01" min="0" asp-for="NovePojisteni.RocniCenaKc" />
+            </div>
+            <div class="field">
+                <label for="NovePojisteni_PlatnostOd">Platnost od</label>
+                <input id="NovePojisteni_PlatnostOd" type="date" asp-for="NovePojisteni.PlatnostOd" />
+            </div>
+            <div class="field">
+                <label for="NovePojisteni_PlatnostDo">Platnost do</label>
+                <input id="NovePojisteni_PlatnostDo" type="date" asp-for="NovePojisteni.PlatnostDo" />
+            </div>
+        </div>
+        <div class="field">
+            <label for="NovePojisteni_Poznamka">Poznámka</label>
+            <textarea id="NovePojisteni_Poznamka" asp-for="NovePojisteni.Poznamka"></textarea>
+        </div>
+        <button class="btn" type="submit">Přidat pojištění</button>
+    </form>
+</div>
