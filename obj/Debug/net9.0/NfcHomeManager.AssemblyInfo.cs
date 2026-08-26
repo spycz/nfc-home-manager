@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NfcHomeManager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f25f1d80e7febbba4af70679cc8ae4aa6a35a963")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3335fc315f4345c218314e375d8f9efc76637c39")]
 [assembly: System.Reflection.AssemblyProductAttribute("NfcHomeManager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NfcHomeManager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
