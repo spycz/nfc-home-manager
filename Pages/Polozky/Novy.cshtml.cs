@@ -80,7 +80,7 @@ public class NovyModel(AppDbContext db) : PageModel
 
 public class PolozkaFormInput
 {
-    [Required(ErrorMessage = "Zadejte název.")]
+    [Required(ErrorMessage = "Zadej název.")]
     [StringLength(200)]
     public string Nazev { get; set; } = string.Empty;
 

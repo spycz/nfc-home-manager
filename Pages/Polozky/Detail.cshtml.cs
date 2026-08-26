@@ -307,7 +307,7 @@ public class NovyServisInput
 
     public ServisTyp Typ { get; set; } = ServisTyp.Servis;
 
-    [Required(ErrorMessage = "Popište, co se dělalo.")]
+    [Required(ErrorMessage = "Popiš, co se dělalo.")]
     [StringLength(500)]
     public string Popis { get; set; } = string.Empty;
 
@@ -322,7 +322,7 @@ public class NovyServisInput
 
 public class NovePojisteniInput
 {
-    [Required(ErrorMessage = "Zadejte pojišťovnu.")]
+    [Required(ErrorMessage = "Zadej pojišťovnu.")]
     [StringLength(150)]
     public string Pojistovna { get; set; } = string.Empty;
 
@@ -344,7 +344,7 @@ public class NovePojisteniInput
 
 public class NovyObsahInput
 {
-    [Required(ErrorMessage = "Zadejte název předmětu.")]
+    [Required(ErrorMessage = "Zadej název předmětu.")]
     [StringLength(200)]
     public string Nazev { get; set; } = string.Empty;
 
@@ -353,7 +353,7 @@ public class NovyObsahInput
 
 public class NovyLekInput
 {
-    [Required(ErrorMessage = "Zadejte název přípravku.")]
+    [Required(ErrorMessage = "Zadej název přípravku.")]
     [StringLength(200)]
     public string Nazev { get; set; } = string.Empty;
 

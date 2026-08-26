@@ -12,7 +12,7 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<KategorieModel> Kategorie { get; set; } = [];
 
     [BindProperty]
-    [Required(ErrorMessage = "Zadejte název kategorie.")]
+    [Required(ErrorMessage = "Zadej název kategorie.")]
     [StringLength(100)]
     public string NovyNazev { get; set; } = string.Empty;
 

@@ -12,7 +12,7 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<Mistnost> Mistnosti { get; set; } = [];
 
     [BindProperty]
-    [Required(ErrorMessage = "Zadejte název místnosti.")]
+    [Required(ErrorMessage = "Zadej název místnosti.")]
     [StringLength(100)]
     public string NovyNazev { get; set; } = string.Empty;
 
