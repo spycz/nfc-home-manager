@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ServisniZaznam> ServisniZaznamy => Set<ServisniZaznam>();
     public DbSet<Pojisteni> Pojisteni => Set<Pojisteni>();
     public DbSet<Lek> Leky => Set<Lek>();
+    public DbSet<LekovyKatalog> LekovyKatalog => Set<LekovyKatalog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,6 +61,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(p => p.ServisniZaznamy)
                 .HasForeignKey(s => s.PolozkaId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LekovyKatalog>(entity =>
+        {
+            // Neni unique - stejny EAN se muze v exportu SUKL objevit vicekrat
+            // (napr. reregistrace), berem prvni shodu.
+            entity.HasIndex(l => l.Ean);
         });
 
         modelBuilder.Entity<Pojisteni>(entity =>

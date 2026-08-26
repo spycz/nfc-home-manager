@@ -1,0 +1,43 @@
+@page
+@model NfcHomeManager.Pages.Admin.ImportLekuModel
+@{
+    ViewData["Title"] = "Databáze léků (SÚKL)";
+}
+
+<h1>Databáze léků (SÚKL)</h1>
+
+<div class="card">
+    <p class="muted">
+        Nahraj export „Databáze léčivých přípravků“ (DLP) z
+        <a href="https://opendata.sukl.cz" target="_blank" rel="noopener">opendata.sukl.cz</a>
+        (CSV/TSV soubor se sloupcem <code>EAN</code>). Použije se k dohledání
+        názvu léku podle naskenovaného čárového kódu při přidávání do
+        lékárničky. Import vždy nahradí celý předchozí obsah — stahuj a
+        nahrávej znovu podle potřeby, SÚKL data se průběžně mění.
+    </p>
+
+    <p>
+        Aktuálně načteno: <strong>@Model.PocetZaznamu</strong> záznamů s EAN kódem
+        @if (Model.PosledniImport.HasValue)
+        {
+            <text>(poslední import @Model.PosledniImport.Value.ToLocalTime().ToString("d.M.yyyy H:mm"))</text>
+        }
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Vysledek))
+    {
+        <div class="alert" style="background:#dcfce7;color:var(--ok);">@Model.Vysledek</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Chyba))
+    {
+        <div class="alert alert--error">@Model.Chyba</div>
+    }
+
+    <form method="post" enctype="multipart/form-data">
+        <div class="field">
+            <label for="Soubor">Soubor (CSV/TSV)</label>
+            <input id="Soubor" type="file" name="Soubor" accept=".csv,.tsv,.txt" required />
+        </div>
+        <button class="btn" type="submit">Nahrát a importovat</button>
+    </form>
+</div>

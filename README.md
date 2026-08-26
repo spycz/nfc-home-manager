@@ -123,15 +123,39 @@ klíče) a předvyplní název/výrobce. Pokud produkt nenajde nebo je
 služba nedostupná, potichu selže — EAN zůstane vyplněný, název se
 dopíše ručně.
 
-**Poznámka k lékům:** Open Food Facts je zaměřená na potraviny a
-běžné spotřební zboží, ne na léčiva — u konkrétních léků tedy lookup
-často nic nenajde. Pro české léky existuje otevřená databáze SÚKL
-(opendata.sukl.cz), ale je to bulk export dat (CSV/XML), ne živé REST
-API klíčované EAN kódem z krabičky — nenašel jsem způsob, jak ho
-spolehlivě napojit na sken, aniž bych si ta data sám stáhl a
-naindexoval. Pokud znáš konkrétní veřejné API pro české léky podle
-EAN, dá se to doplnit; jinak u léků sken alespoň uloží kód pro
-pozdější dohledání a název se dopisuje ručně.
+**Léky konkrétně:** Open Food Facts je zaměřená na potraviny a běžné
+spotřební zboží, ne na léčiva, takže u konkrétních léků často nic
+nenajde. Pro české léky proto existuje druhá, přesnější cesta —
+lokální databáze SÚKL:
+
+### Databáze léků SÚKL (`/Admin/ImportLeku`)
+
+SÚKL nemá živé API klíčované EAN kódem, jen periodické bulk exporty
+(opendata.sukl.cz, „Databáze léčivých přípravků“ / DLP). Řešení: soubor
+se stáhne mimo appku (má normální internetové připojení, na rozdíl od
+vývojového sandboxu, kde jsem tohle stavěl) a ručně nahraje na
+`/Admin/ImportLeku` jako CSV/TSV. Import:
+
+- si poradí s tabulátorem i středníkem jako oddělovačem (`CsvHelper`
+  s `DetectDelimiter`),
+- zvládne UTF-8 i Windows-1250 (starší CZ vládní exporty), s
+  automatickou detekcí podle toho, jestli se po UTF-8 dekódování
+  objeví náhradní znaky,
+- vezme jen řádky s vyplněným EAN (ostatní jsou k ničemu pro
+  vyhledávání podle skenu) a při více EAN kódech v jednom poli je
+  rozdělí do samostatných záznamů,
+- při každém nahrání **celý předchozí obsah nahradí** — spusť znovu,
+  kdykoli si stáhneš čerstvější export.
+
+`/api/barcode/{ean}` nejdřív zkusí tuhle lokální databázi (přesné,
+česky, offline) a teprve když nic nenajde, spadne na Open Food Facts.
+
+V ukázkovém exportu, který jsem dostal k ověření, byl sloupec `EAN` u
+všech řádků prázdný — šlo ale o starší registrace (60.–90. léta,
+90. roky), kde se čárové kódy tolik nesledovaly. U novodobějších léků
+očekávám vyplněný sloupec častěji, ale pokrytí bude nutně nerovnoměrné
+— u starých/vzácných přípravků sken může skončit naprázdno i po
+importu, a pak se název dopíše ručně jako dřív.
 
 Poznámka ke kompatibilitě: `@zxing/browser` funguje na desktopu
 (Chrome/Edge) i v mobilním Safari (iPhone) přes standardní

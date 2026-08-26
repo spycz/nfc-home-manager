@@ -16,6 +16,10 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        // Umoznuje Encoding.GetEncoding(1250) pri importu SUKL exportu
+        // (Pages/Admin/ImportLeku), ktere .NET Core neregistruje ve vychozim stavu.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         // Pomocny prikaz pro vygenerovani AdminAuth:PasswordHash do appsettings:
         //   dotnet run -- hash-password MojeHeslo
         if (args.Length == 2 && args[0] == "hash-password")
@@ -140,17 +144,26 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // Pomocny lookup pro naskenovany carovy kod - zkusi najit nazev/znacku
-        // produktu ve verejne databazi Open Food Facts (obecne produkty, ne
-        // specificky leky - pro CZ leky neexistuje verejne znama API klicovana
-        // EAN kodem, jen bulk open data SUKL). Selze potichu, uzivatel dopise
-        // nazev rucne. Jen pro prihlasene - je to pomucka pro editaci, ne
-        // verejny proxy.
-        app.MapGet("/api/barcode/{ean}", async (string ean, IHttpClientFactory httpClientFactory, CancellationToken ct) =>
+        // Pomocny lookup pro naskenovany carovy kod. Nejdriv zkusi rucne
+        // naimportovanou databazi SUKL (viz /Admin/ImportLeku) - ta pokryva
+        // ceske leky presne, jen se musi obcas rucne obnovit novym exportem.
+        // Kdyz tam nic neni, zkusi verejnou Open Food Facts (obecne produkty,
+        // ne leky). Selze potichu, uzivatel dopise nazev rucne. Jen pro
+        // prihlasene - je to pomucka pro editaci, ne verejny proxy.
+        app.MapGet("/api/barcode/{ean}", async (string ean, AppDbContext db, IHttpClientFactory httpClientFactory, CancellationToken ct) =>
         {
             if (!Regex.IsMatch(ean, @"^\d{6,14}$"))
             {
                 return Results.BadRequest();
+            }
+
+            var lek = await db.LekovyKatalog.AsNoTracking().FirstOrDefaultAsync(l => l.Ean == ean, ct);
+            if (lek is not null)
+            {
+                var nazev = string.Join(" ", new[] { lek.Nazev, lek.Sila, lek.Forma }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+                return Results.Ok(new { found = true, name = nazev, brand = (string?)null });
             }
 
             var client = httpClientFactory.CreateClient("barcode");
