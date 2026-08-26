@@ -8,7 +8,8 @@ public enum UpozorneniTyp
 {
     Zaruka,
     Servis,
-    Pojisteni
+    Pojisteni,
+    Expirace
 }
 
 public class Upozorneni
@@ -29,6 +30,7 @@ public static class ReminderService
         var polozky = await db.Polozky
             .Where(p => p.Aktivni)
             .Include(p => p.Pojisteni)
+            .Include(p => p.Leky)
             .AsNoTracking()
             .ToListAsync(ct);
 
@@ -43,7 +45,12 @@ public static class ReminderService
 
             if (p.DalsiServisDo is { } dalsiServisDo && dalsiServisDo <= hranice)
             {
-                vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Servis, Datum = dalsiServisDo, Popis = "Plánovaný servis" });
+                vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Servis, Datum = dalsiServisDo, Popis = "Plánovaný servis / STK" });
+            }
+
+            if (p.Expirace is { } expirace && expirace <= hranice)
+            {
+                vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Expirace, Datum = expirace, Popis = "Expirace" });
             }
 
             // Polozka muze mit soucasne vic aktivnich pojisteni (napr. povinne
@@ -59,6 +66,22 @@ public static class ReminderService
                         Typ = UpozorneniTyp.Pojisteni,
                         Datum = platnostDo,
                         Popis = $"Konec pojištění ({pojisteni.Pojistovna})"
+                    });
+                }
+            }
+
+            // Lekarnicka/prvni pomoc: kazdy lek/prostredek se posuzuje zvlast,
+            // aby dřív expirující nezastinil ten s pozdejsim datem.
+            foreach (var lek in p.Leky)
+            {
+                if (lek.Expirace is { } lekExpirace && lekExpirace <= hranice)
+                {
+                    vysledek.Add(new Upozorneni
+                    {
+                        Polozka = p,
+                        Typ = UpozorneniTyp.Expirace,
+                        Datum = lekExpirace,
+                        Popis = $"Expirace: {lek.Nazev}" + (string.IsNullOrWhiteSpace(lek.ProKoho) ? "" : $" ({lek.ProKoho})")
                     });
                 }
             }

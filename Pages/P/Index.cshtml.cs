@@ -17,6 +17,9 @@ public class IndexModel(AppDbContext db) : PageModel
         Polozka = await db.Polozky
             .Include(p => p.Kategorie)
             .Include(p => p.Mistnost)
+            .Include(p => p.Kontejner)
+            .Include(p => p.Obsah.OrderBy(o => o.Nazev))
+            .Include(p => p.Leky.OrderBy(l => l.Expirace))
             .Include(p => p.ServisniZaznamy.OrderByDescending(s => s.Datum).Take(5))
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Kod == kod, ct);

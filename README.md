@@ -30,8 +30,36 @@ servis, poznámka. K položce lze přidávat neomezeně záznamů **servisu/
 oprav** (i STK) a **pojištění** (hodí se pro auto — pojišťovna, číslo
 smlouvy, platnost, roční cena).
 
+U každé položky se navíc zvlášť zaškrtává, co se u ní má sledovat: má
+vlastní NFC kartu, pojištění, obecnou expiraci, servisní interval,
+revizi/STK. Sekce v administraci i na veřejné stránce se zobrazují jen
+podle toho, co je relevantní — lampa tak není zahlcená poli pro
+pojištění.
+
+### Co NFC karta reprezentuje (`Rezim`)
+
+- **Předmět** — běžná evidovaná věc (výchozí).
+- **Krabice / místnost** (`Kontejner`) — naskenování ukáže seznam věcí
+  uvnitř. Obsahem může být předmět bez vlastní karty (jen položka v
+  seznamu) i předmět s vlastní kartou a vlastní veřejnou stránkou
+  (např. krabice s barvami obsahuje váleček a fólii bez karty, ale
+  elektrická stříkací pistole svou vlastní kartu má).
+- **Lékárnička** — drží seznam léků/prostředků (`Lek`): název, expirace,
+  na co je, pro koho v rodině, je-li na předpis, dávkování, nežádoucí
+  účinky, s čím se nesmí kombinovat, a příznak lék/prostředek (náplast
+  není lék, ale patří tam taky).
+- **První pomoc** — samostatný druh krabice, odděleně od domácí
+  lékárničky, pro obsah spojený jen s první pomocí.
+
+### Specializace předmětu
+
+`Predmet` navíc může mít `Specializace = Auto` (pole SPZ) nebo
+`PlynovyKotel` — mění to jen doporučené sledované vlastnosti a popisky,
+STK/revize a servis se pořád evidují přes běžné servisní záznamy.
+
 Přehledová stránka (`/`) ukazuje věci, kterým se blíží konec záruky,
-naplánovaný servis nebo konec pojištění (výhled 60 dní).
+naplánovaný servis/STK, konec pojištění nebo expirace (včetně expirace
+jednotlivých léků v lékárničce) — výhled 60 dní.
 
 ## Přihlášení
 

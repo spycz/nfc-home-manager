@@ -1,5 +1,6 @@
 @page "{kod}"
 @model NfcHomeManager.Pages.P.IndexModel
+@using NfcHomeManager.Models
 @{
     Layout = "_Layout";
     ViewData["Title"] = Model.Polozka?.Nazev ?? "Položka nenalezena";
@@ -15,62 +16,172 @@
 else
 {
     var p = Model.Polozka;
+    var dnes = DateOnly.FromDateTime(DateTime.Today);
     <div class="card public-item">
         <p class="muted">@(p.Kategorie?.Nazev ?? "bez kategorie") · @(p.Mistnost?.Nazev ?? "bez místnosti")</p>
         <h1>@p.Nazev</h1>
 
-        <table>
-            <tbody>
-                @if (!string.IsNullOrWhiteSpace(p.Vyrobce) || !string.IsNullOrWhiteSpace(p.Model))
-                {
-                    <tr><th>Výrobce / typ</th><td>@p.Vyrobce @p.Model</td></tr>
-                }
-                @if (!string.IsNullOrWhiteSpace(p.SerioveCislo))
-                {
-                    <tr><th>Sériové číslo</th><td>@p.SerioveCislo</td></tr>
-                }
-                @if (p.DatumPorizeni.HasValue)
-                {
-                    <tr><th>Pořízeno</th><td>@p.DatumPorizeni.Value.ToString("d.M.yyyy")</td></tr>
-                }
-                @if (p.ZarukaDo.HasValue)
-                {
-                    <tr>
-                        <th>Záruka do</th>
-                        <td>
-                            <span class="badge @(p.ZarukaDo < DateOnly.FromDateTime(DateTime.Today) ? "badge--overdue" : "badge--ok")">
-                                @p.ZarukaDo.Value.ToString("d.M.yyyy")
-                            </span>
-                        </td>
-                    </tr>
-                }
-                @if (p.DalsiServisDo.HasValue)
-                {
-                    <tr><th>Příští servis</th><td>@p.DalsiServisDo.Value.ToString("d.M.yyyy")</td></tr>
-                }
-            </tbody>
-        </table>
-
-        @if (!string.IsNullOrWhiteSpace(p.Poznamka))
+        @if (p.Kontejner is { } kontejner)
         {
-            <p><strong>Poznámka:</strong> @p.Poznamka</p>
+            <p class="muted">Uloženo v: <strong>@kontejner.Nazev</strong></p>
         }
 
-        @if (p.ServisniZaznamy.Count > 0)
+        @if (p.Rezim is NfcRezim.Predmet)
         {
-            <h3>Historie servisu</h3>
             <table>
                 <tbody>
-                    @foreach (var s in p.ServisniZaznamy)
+                    @if (p.Specializace == Specializace.Auto && !string.IsNullOrWhiteSpace(p.Spz))
+                    {
+                        <tr><th>SPZ</th><td>@p.Spz</td></tr>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(p.Vyrobce) || !string.IsNullOrWhiteSpace(p.Model))
+                    {
+                        <tr><th>Výrobce / typ</th><td>@p.Vyrobce @p.Model</td></tr>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(p.SerioveCislo))
+                    {
+                        <tr><th>Sériové číslo</th><td>@p.SerioveCislo</td></tr>
+                    }
+                    @if (p.DatumPorizeni.HasValue)
+                    {
+                        <tr><th>Pořízeno</th><td>@p.DatumPorizeni.Value.ToString("d.M.yyyy")</td></tr>
+                    }
+                    @if (p.ZarukaDo.HasValue)
                     {
                         <tr>
-                            <td>@s.Datum.ToString("d.M.yyyy")</td>
-                            <td>@s.Typ</td>
-                            <td>@s.Popis</td>
+                            <th>Záruka do</th>
+                            <td>
+                                <span class="badge @(p.ZarukaDo < dnes ? "badge--overdue" : "badge--ok")">
+                                    @p.ZarukaDo.Value.ToString("d.M.yyyy")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                    @if (p.DalsiServisDo.HasValue)
+                    {
+                        <tr><th>Příští servis / STK</th><td>@p.DalsiServisDo.Value.ToString("d.M.yyyy")</td></tr>
+                    }
+                    @if (p.Expirace.HasValue)
+                    {
+                        <tr>
+                            <th>Expirace</th>
+                            <td>
+                                <span class="badge @(p.Expirace < dnes ? "badge--overdue" : "badge--ok")">
+                                    @p.Expirace.Value.ToString("d.M.yyyy")
+                                </span>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
+
+            @if (!string.IsNullOrWhiteSpace(p.Poznamka))
+            {
+                <p><strong>Poznámka:</strong> @p.Poznamka</p>
+            }
+
+            @if (p.ServisniZaznamy.Count > 0)
+            {
+                <h3>Historie servisu</h3>
+                <table>
+                    <tbody>
+                        @foreach (var s in p.ServisniZaznamy)
+                        {
+                            <tr>
+                                <td>@s.Datum.ToString("d.M.yyyy")</td>
+                                <td>@s.Typ</td>
+                                <td>@s.Popis</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+
+        @if (p.Rezim is NfcRezim.Kontejner or NfcRezim.PrvniPomoc)
+        {
+            <h3>Obsah</h3>
+            @if (p.Obsah.Count == 0)
+            {
+                <p class="muted">Prázdné.</p>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var o in p.Obsah)
+                    {
+                        <li>
+                            @if (o.MaVlastniNfcKartu)
+                            {
+                                <a href="/p/@o.Kod">@o.Nazev</a>
+                            }
+                            else
+                            {
+                                @o.Nazev
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        }
+
+        @if (p.Rezim == NfcRezim.Lekarnicka)
+        {
+            <h3>Léky a prostředky</h3>
+            @if (p.Leky.Count == 0)
+            {
+                <p class="muted">Prázdné.</p>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Název</th>
+                            <th>Na co</th>
+                            <th>Pro koho</th>
+                            <th>Dávkování</th>
+                            <th>Expirace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var l in p.Leky)
+                        {
+                            <tr>
+                                <td>@l.Nazev @(l.JeLek ? "" : "(prostředek)")</td>
+                                <td>@(l.NaCoJe ?? "—")</td>
+                                <td>@(l.ProKoho ?? "—")</td>
+                                <td>@(l.Davkovani ?? "—")</td>
+                                <td>
+                                    @if (l.Expirace.HasValue)
+                                    {
+                                        <span class="badge @(l.Expirace < dnes ? "badge--overdue" : "badge--ok")">@l.Expirace.Value.ToString("d.M.yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <text>—</text>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky) || !string.IsNullOrWhiteSpace(l.Interakce))
+                            {
+                                <tr>
+                                    <td colspan="5" class="muted">
+                                        @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky))
+                                        {
+                                            <div><strong>Nežádoucí účinky:</strong> @l.NezadouciUcinky</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(l.Interakce))
+                                        {
+                                            <div><strong>Nekombinovat s:</strong> @l.Interakce</div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            }
         }
 
         @if (User.Identity?.IsAuthenticated == true)

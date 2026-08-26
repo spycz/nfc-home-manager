@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using NfcHomeManager.Data;
 using NfcHomeManager.Models;
+using NfcHomeManager.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace NfcHomeManager.Pages.Polozky;
@@ -17,6 +18,12 @@ public class DetailModel(AppDbContext db) : PageModel
 
     [BindProperty]
     public NovePojisteniInput NovePojisteni { get; set; } = new();
+
+    [BindProperty]
+    public NovyObsahInput NovyObsah { get; set; } = new();
+
+    [BindProperty]
+    public NovyLekInput NovyLek { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken ct)
     {
@@ -35,8 +42,8 @@ public class DetailModel(AppDbContext db) : PageModel
             return NotFound();
         }
 
-        // Vycistit ModelState od validace nesouvisejiciho formulare (NovePojisteni)
-        // navazaneho na stejnou stranku a validovat jen prave odeslany model.
+        // Vycistit ModelState od validace nesouvisejicich formularu navazanych
+        // na stejnou stranku a validovat jen prave odeslany model.
         ModelState.Clear();
         if (!TryValidateModel(NovyServis, nameof(NovyServis)))
         {
@@ -116,6 +123,93 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
+    // Pridani predmetu jako obsahu kontejneru (krabice/mistnost/prvni pomoc).
+    // Novy predmet je plnohodnotna Polozka - lze ho pozdeji upravit a doplnit,
+    // ci mu i dat vlastni NFC stitek, pokud MaVlastniNfcKartu zaskrtneme.
+    public async Task<IActionResult> OnPostPridatObsahAsync(int id, CancellationToken ct)
+    {
+        if (!await NacistPolozkuAsync(id, ct))
+        {
+            return NotFound();
+        }
+
+        ModelState.Clear();
+        if (!TryValidateModel(NovyObsah, nameof(NovyObsah)))
+        {
+            return Page();
+        }
+
+        var predmet = new Polozka
+        {
+            Kod = await KodGenerator.VygenerovatUnikatniAsync(db, ct),
+            Nazev = NovyObsah.Nazev.Trim(),
+            KontejnerId = id,
+            MistnostId = Polozka.MistnostId,
+            MaVlastniNfcKartu = NovyObsah.MaVlastniNfcKartu
+        };
+
+        db.Polozky.Add(predmet);
+        await db.SaveChangesAsync(ct);
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    // Vyjme predmet z kontejneru (nemaze ho, jen odpoji KontejnerId).
+    public async Task<IActionResult> OnPostOdebratObsahAsync(int id, int obsahId, CancellationToken ct)
+    {
+        var predmet = await db.Polozky.FirstOrDefaultAsync(p => p.Id == obsahId && p.KontejnerId == id, ct);
+        if (predmet is not null)
+        {
+            predmet.KontejnerId = null;
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    public async Task<IActionResult> OnPostPridatLekAsync(int id, CancellationToken ct)
+    {
+        if (!await NacistPolozkuAsync(id, ct))
+        {
+            return NotFound();
+        }
+
+        ModelState.Clear();
+        if (!TryValidateModel(NovyLek, nameof(NovyLek)))
+        {
+            return Page();
+        }
+
+        db.Leky.Add(new Lek
+        {
+            LekarnickaId = id,
+            Nazev = NovyLek.Nazev.Trim(),
+            JeLek = NovyLek.JeLek,
+            NaCoJe = NovyLek.NaCoJe,
+            ProKoho = NovyLek.ProKoho,
+            NaPredpis = NovyLek.NaPredpis,
+            Davkovani = NovyLek.Davkovani,
+            NezadouciUcinky = NovyLek.NezadouciUcinky,
+            Interakce = NovyLek.Interakce,
+            Expirace = NovyLek.Expirace,
+            Poznamka = NovyLek.Poznamka
+        });
+
+        await db.SaveChangesAsync(ct);
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    public async Task<IActionResult> OnPostSmazatLekAsync(int id, int lekId, CancellationToken ct)
+    {
+        var lek = await db.Leky.FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
+        if (lek is not null)
+        {
+            db.Leky.Remove(lek);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
     public async Task<IActionResult> OnPostSmazatPolozkuAsync(int id, CancellationToken ct)
     {
         var polozka = await db.Polozky.FindAsync([id], ct);
@@ -133,6 +227,9 @@ public class DetailModel(AppDbContext db) : PageModel
         var polozka = await db.Polozky
             .Include(p => p.Kategorie)
             .Include(p => p.Mistnost)
+            .Include(p => p.Kontejner)
+            .Include(p => p.Obsah.OrderBy(o => o.Nazev))
+            .Include(p => p.Leky.OrderBy(l => l.Expirace))
             .Include(p => p.ServisniZaznamy.OrderByDescending(s => s.Datum))
             .Include(p => p.Pojisteni.OrderByDescending(i => i.PlatnostDo))
             .FirstOrDefaultAsync(p => p.Id == id, ct);
@@ -185,6 +282,46 @@ public class NovePojisteniInput
 
     [Range(0, 100_000_000)]
     public decimal? RocniCenaKc { get; set; }
+
+    [StringLength(500)]
+    public string? Poznamka { get; set; }
+}
+
+public class NovyObsahInput
+{
+    [Required(ErrorMessage = "Zadejte název předmětu.")]
+    [StringLength(200)]
+    public string Nazev { get; set; } = string.Empty;
+
+    public bool MaVlastniNfcKartu { get; set; }
+}
+
+public class NovyLekInput
+{
+    [Required(ErrorMessage = "Zadejte název přípravku.")]
+    [StringLength(200)]
+    public string Nazev { get; set; } = string.Empty;
+
+    public bool JeLek { get; set; } = true;
+
+    [StringLength(200)]
+    public string? NaCoJe { get; set; }
+
+    [StringLength(100)]
+    public string? ProKoho { get; set; }
+
+    public bool NaPredpis { get; set; }
+
+    [StringLength(200)]
+    public string? Davkovani { get; set; }
+
+    [StringLength(1000)]
+    public string? NezadouciUcinky { get; set; }
+
+    [StringLength(1000)]
+    public string? Interakce { get; set; }
+
+    public DateOnly? Expirace { get; set; }
 
     [StringLength(500)]
     public string? Poznamka { get; set; }

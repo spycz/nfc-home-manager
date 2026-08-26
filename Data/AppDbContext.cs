@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Polozka> Polozky => Set<Polozka>();
     public DbSet<ServisniZaznam> ServisniZaznamy => Set<ServisniZaznam>();
     public DbSet<Pojisteni> Pojisteni => Set<Pojisteni>();
+    public DbSet<Lek> Leky => Set<Lek>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,6 +19,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(p => p.Kod).IsUnique();
             entity.HasIndex(p => p.NfcUid).IsUnique().HasFilter("NfcUid IS NOT NULL");
             entity.Property(p => p.CenaKc).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.Rezim).HasConversion<string>();
+            entity.Property(p => p.Specializace).HasConversion<string>();
 
             entity.HasOne(p => p.Kategorie)
                 .WithMany(k => k.Polozky)
@@ -28,6 +31,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(m => m.Polozky)
                 .HasForeignKey(p => p.MistnostId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Kontejner je take Polozka (sebe-vazba) - kdyz se krabice smaze,
+            // obsah se jen odpoji, nemaze se s ni.
+            entity.HasOne(p => p.Kontejner)
+                .WithMany(p => p.Obsah)
+                .HasForeignKey(p => p.KontejnerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Lek>(entity =>
+        {
+            entity.HasOne(l => l.Lekarnicka)
+                .WithMany(p => p.Leky)
+                .HasForeignKey(l => l.LekarnickaId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ServisniZaznam>(entity =>

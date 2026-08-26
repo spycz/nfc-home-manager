@@ -1,7 +1,26 @@
 @model NfcHomeManager.Pages.Polozky.PolozkaFormInput
+@using NfcHomeManager.Models
 @{
-    var vsechnyKategorie = (List<NfcHomeManager.Models.Kategorie>)ViewData["VsechnyKategorie"]!;
-    var vsechnyMistnosti = (List<NfcHomeManager.Models.Mistnost>)ViewData["VsechnyMistnosti"]!;
+    var vsechnyKategorie = (List<Kategorie>)ViewData["VsechnyKategorie"]!;
+    var vsechnyMistnosti = (List<Mistnost>)ViewData["VsechnyMistnosti"]!;
+    var vsechnyKontejnery = (List<Polozka>)ViewData["VsechnyKontejnery"]!;
+
+    static string RezimLabel(NfcRezim r) => r switch
+    {
+        NfcRezim.Predmet => "Předmět",
+        NfcRezim.Kontejner => "Krabice / místnost (obsahuje předměty)",
+        NfcRezim.Lekarnicka => "Lékárnička (léky a prostředky)",
+        NfcRezim.PrvniPomoc => "První pomoc (samostatná krabice)",
+        _ => r.ToString()
+    };
+
+    static string SpecializaceLabel(Specializace s) => s switch
+    {
+        Specializace.Obecna => "Obecná položka",
+        Specializace.Auto => "Auto / vozidlo",
+        Specializace.PlynovyKotel => "Plynový kotel",
+        _ => s.ToString()
+    };
 }
 
 <div class="form-grid">
@@ -12,6 +31,41 @@
     <div class="field">
         <label for="Input_NfcUid">UID NFC štítku</label>
         <input id="Input_NfcUid" type="text" asp-for="NfcUid" placeholder="volitelné" />
+    </div>
+
+    <div class="field">
+        <label for="Input_Rezim">Co NFC karta reprezentuje</label>
+        <select id="Input_Rezim" asp-for="Rezim">
+            @foreach (var r in Enum.GetValues<NfcRezim>())
+            {
+                <option value="@r">@RezimLabel(r)</option>
+            }
+        </select>
+    </div>
+    <div class="field">
+        <label for="Input_Specializace">Specializace předmětu</label>
+        <select id="Input_Specializace" asp-for="Specializace">
+            @foreach (var s in Enum.GetValues<Specializace>())
+            {
+                <option value="@s">@SpecializaceLabel(s)</option>
+            }
+        </select>
+    </div>
+
+    <div class="field">
+        <label for="Input_Spz">SPZ (u vozidla)</label>
+        <input id="Input_Spz" type="text" asp-for="Spz" />
+    </div>
+    <div class="field">
+        <label for="Input_KontejnerId">Umístěno v krabici</label>
+        <select id="Input_KontejnerId" asp-for="KontejnerId">
+            <option value="">— není v krabici —</option>
+            @foreach (var k in vsechnyKontejnery)
+            {
+                <option value="@k.Id">@k.Nazev</option>
+            }
+        </select>
+        <span asp-validation-for="KontejnerId" class="muted" style="color:var(--danger);"></span>
     </div>
 
     <div class="field">
@@ -63,8 +117,23 @@
     </div>
 
     <div class="field">
-        <label for="Input_DalsiServisDo">Příští plánovaný servis</label>
+        <label for="Input_DalsiServisDo">Příští plánovaný servis / STK</label>
         <input id="Input_DalsiServisDo" type="date" asp-for="DalsiServisDo" />
+    </div>
+    <div class="field">
+        <label for="Input_Expirace">Obecná expirace (baterie, chemie…)</label>
+        <input id="Input_Expirace" type="date" asp-for="Expirace" />
+    </div>
+</div>
+
+<div class="field">
+    <label>Co se u této položky sleduje</label>
+    <div class="checkbox-row">
+        <label><input type="checkbox" asp-for="MaVlastniNfcKartu" /> má vlastní NFC kartu</label>
+        <label><input type="checkbox" asp-for="SledovatPojisteni" /> pojištění</label>
+        <label><input type="checkbox" asp-for="SledovatExpiraci" /> expirace</label>
+        <label><input type="checkbox" asp-for="SledovatServis" /> servisní interval</label>
+        <label><input type="checkbox" asp-for="SledovatRevizi" /> revize / STK</label>
     </div>
 </div>
 

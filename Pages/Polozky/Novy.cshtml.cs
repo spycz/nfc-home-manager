@@ -13,9 +13,10 @@ public class NovyModel(AppDbContext db) : PageModel
     [BindProperty]
     public PolozkaFormInput Input { get; set; } = new();
 
-    public async Task OnGetAsync(CancellationToken ct)
+    public async Task OnGetAsync(int? kontejnerId, CancellationToken ct)
     {
         Input.ZarukaMesice = 24;
+        Input.KontejnerId = kontejnerId;
         await NacistCiselnikyAsync(ct);
     }
 
@@ -30,11 +31,15 @@ public class NovyModel(AppDbContext db) : PageModel
 
         var polozka = new Polozka
         {
-            Kod = await VygenerovatUnikatniKodAsync(ct),
+            Kod = await KodGenerator.VygenerovatUnikatniAsync(db, ct),
             Nazev = Input.Nazev.Trim(),
             NfcUid = string.IsNullOrWhiteSpace(Input.NfcUid) ? null : Input.NfcUid.Trim(),
+            Rezim = Input.Rezim,
+            Specializace = Input.Specializace,
+            Spz = Input.Spz,
             KategorieId = Input.KategorieId,
             MistnostId = Input.MistnostId,
+            KontejnerId = Input.KontejnerId,
             Vyrobce = Input.Vyrobce,
             Model = Input.Model,
             SerioveCislo = Input.SerioveCislo,
@@ -42,6 +47,12 @@ public class NovyModel(AppDbContext db) : PageModel
             CenaKc = Input.CenaKc,
             ZarukaMesice = Input.ZarukaMesice,
             DalsiServisDo = Input.DalsiServisDo,
+            MaVlastniNfcKartu = Input.MaVlastniNfcKartu,
+            SledovatPojisteni = Input.SledovatPojisteni,
+            SledovatExpiraci = Input.SledovatExpiraci,
+            SledovatServis = Input.SledovatServis,
+            SledovatRevizi = Input.SledovatRevizi,
+            Expirace = Input.Expirace,
             Poznamka = Input.Poznamka
         };
 
@@ -53,24 +64,14 @@ public class NovyModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={polozka.Id}");
     }
 
-    private async Task<string> VygenerovatUnikatniKodAsync(CancellationToken ct)
-    {
-        for (var pokus = 0; pokus < 10; pokus++)
-        {
-            var kod = KodGenerator.Generate();
-            if (!await db.Polozky.AnyAsync(p => p.Kod == kod, ct))
-            {
-                return kod;
-            }
-        }
-
-        throw new InvalidOperationException("Nepodařilo se vygenerovat unikátní kód.");
-    }
-
     private async Task NacistCiselnikyAsync(CancellationToken ct)
     {
         ViewData["VsechnyKategorie"] = await db.Kategorie.OrderBy(k => k.Nazev).ToListAsync(ct);
         ViewData["VsechnyMistnosti"] = await db.Mistnosti.OrderBy(m => m.Nazev).ToListAsync(ct);
+        ViewData["VsechnyKontejnery"] = await db.Polozky
+            .Where(p => p.Rezim == NfcRezim.Kontejner || p.Rezim == NfcRezim.PrvniPomoc)
+            .OrderBy(p => p.Nazev)
+            .ToListAsync(ct);
     }
 }
 
@@ -80,8 +81,15 @@ public class PolozkaFormInput
     [StringLength(200)]
     public string Nazev { get; set; } = string.Empty;
 
+    public NfcRezim Rezim { get; set; } = NfcRezim.Predmet;
+    public Specializace Specializace { get; set; } = Specializace.Obecna;
+
+    [StringLength(20)]
+    public string? Spz { get; set; }
+
     public int? KategorieId { get; set; }
     public int? MistnostId { get; set; }
+    public int? KontejnerId { get; set; }
 
     [StringLength(100)]
     public string? Vyrobce { get; set; }
@@ -104,6 +112,13 @@ public class PolozkaFormInput
     public int ZarukaMesice { get; set; } = 24;
 
     public DateOnly? DalsiServisDo { get; set; }
+
+    public bool MaVlastniNfcKartu { get; set; } = true;
+    public bool SledovatPojisteni { get; set; }
+    public bool SledovatExpiraci { get; set; }
+    public bool SledovatServis { get; set; }
+    public bool SledovatRevizi { get; set; }
+    public DateOnly? Expirace { get; set; }
 
     [StringLength(2000)]
     public string? Poznamka { get; set; }

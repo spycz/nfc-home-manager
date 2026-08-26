@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using NfcHomeManager.Data;
 using System.Security.Cryptography;
 
 namespace NfcHomeManager.Services;
@@ -19,5 +21,19 @@ public static class KodGenerator
         }
 
         return new string(chars);
+    }
+
+    public static async Task<string> VygenerovatUnikatniAsync(AppDbContext db, CancellationToken ct)
+    {
+        for (var pokus = 0; pokus < 10; pokus++)
+        {
+            var kod = Generate();
+            if (!await db.Polozky.AnyAsync(p => p.Kod == kod, ct))
+            {
+                return kod;
+            }
+        }
+
+        throw new InvalidOperationException("Nepodařilo se vygenerovat unikátní kód.");
     }
 }

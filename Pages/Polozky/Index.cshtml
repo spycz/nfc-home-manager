@@ -1,7 +1,17 @@
 @page
 @model NfcHomeManager.Pages.Polozky.IndexModel
+@using NfcHomeManager.Models
 @{
     ViewData["Title"] = "Položky";
+
+    static string RezimLabel(NfcRezim r) => r switch
+    {
+        NfcRezim.Predmet => "Předmět",
+        NfcRezim.Kontejner => "Krabice / místnost",
+        NfcRezim.Lekarnicka => "Lékárnička",
+        NfcRezim.PrvniPomoc => "První pomoc",
+        _ => r.ToString()
+    };
 }
 
 <h1>Položky</h1>
@@ -32,6 +42,16 @@
                 }
             </select>
         </div>
+        <div class="field">
+            <label for="rezim">Typ NFC karty</label>
+            <select id="rezim" name="rezim">
+                <option value="">Vše</option>
+                @foreach (var r in Enum.GetValues<NfcRezim>())
+                {
+                    <option value="@r" selected="@(Model.Rezim == r)">@RezimLabel(r)</option>
+                }
+            </select>
+        </div>
         <button class="btn" type="submit">Filtrovat</button>
         <a class="btn btn--secondary" href="/Polozky">Zrušit filtr</a>
     </form>
@@ -52,8 +72,9 @@
             <thead>
                 <tr>
                     <th>Název</th>
+                    <th>Typ</th>
                     <th>Kategorie</th>
-                    <th>Místnost</th>
+                    <th>Umístění</th>
                     <th>Kód</th>
                     <th>Záruka do</th>
                 </tr>
@@ -63,8 +84,15 @@
                 {
                     <tr>
                         <td><a href="/Polozky/Detail?id=@p.Id">@p.Nazev</a></td>
+                        <td>
+                            <span class="badge">@RezimLabel(p.Rezim)</span>
+                            @if (p.Specializace != Specializace.Obecna)
+                            {
+                                <span class="badge">@(p.Specializace == Specializace.Auto ? "Auto" : "Kotel")</span>
+                            }
+                        </td>
                         <td>@(p.Kategorie?.Nazev ?? "—")</td>
-                        <td>@(p.Mistnost?.Nazev ?? "—")</td>
+                        <td>@(p.Kontejner?.Nazev ?? p.Mistnost?.Nazev ?? "—")</td>
                         <td><code>@p.Kod</code></td>
                         <td>@(p.ZarukaDo?.ToString("d.M.yyyy") ?? "—")</td>
                     </tr>

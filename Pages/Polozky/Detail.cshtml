@@ -3,18 +3,41 @@
 @using NfcHomeManager.Models
 @{
     ViewData["Title"] = Model.Polozka.Nazev;
+
+    static string RezimLabel(NfcRezim r) => r switch
+    {
+        NfcRezim.Predmet => "Předmět",
+        NfcRezim.Kontejner => "Krabice / místnost",
+        NfcRezim.Lekarnicka => "Lékárnička",
+        NfcRezim.PrvniPomoc => "První pomoc",
+        _ => r.ToString()
+    };
 }
 
 <h1>@Model.Polozka.Nazev</h1>
 
 <div class="card">
     <p>
-        @(Model.Polozka.Kategorie?.Nazev ?? "bez kategorie") ·
+        <span class="badge">@RezimLabel(Model.Polozka.Rezim)</span>
+        @if (Model.Polozka.Specializace != Specializace.Obecna)
+        {
+            <span class="badge">@(Model.Polozka.Specializace == Specializace.Auto ? "Auto" : "Plynový kotel")</span>
+        }
+        · @(Model.Polozka.Kategorie?.Nazev ?? "bez kategorie") ·
         @(Model.Polozka.Mistnost?.Nazev ?? "bez místnosti")
     </p>
 
+    @if (Model.Polozka.Kontejner is { } kontejner)
+    {
+        <p class="muted">Umístěno v: <a href="/Polozky/Detail?id=@kontejner.Id">@kontejner.Nazev</a></p>
+    }
+
     <table>
         <tbody>
+            @if (Model.Polozka.Specializace == Specializace.Auto)
+            {
+                <tr><th>SPZ</th><td>@(Model.Polozka.Spz ?? "—")</td></tr>
+            }
             <tr><th>Výrobce</th><td>@(Model.Polozka.Vyrobce ?? "—")</td></tr>
             <tr><th>Typ / model</th><td>@(Model.Polozka.Model ?? "—")</td></tr>
             <tr><th>Sériové číslo</th><td>@(Model.Polozka.SerioveCislo ?? "—")</td></tr>
@@ -28,7 +51,14 @@
                     (@Model.Polozka.ZarukaMesice měsíců)
                 </td>
             </tr>
-            <tr><th>Příští servis</th><td>@(Model.Polozka.DalsiServisDo?.ToString("d.M.yyyy") ?? "—")</td></tr>
+            @if (Model.Polozka.SledovatServis || Model.Polozka.SledovatRevizi || Model.Polozka.DalsiServisDo.HasValue)
+            {
+                <tr><th>Příští servis / STK</th><td>@(Model.Polozka.DalsiServisDo?.ToString("d.M.yyyy") ?? "—")</td></tr>
+            }
+            @if (Model.Polozka.SledovatExpiraci || Model.Polozka.Expirace.HasValue)
+            {
+                <tr><th>Expirace</th><td>@(Model.Polozka.Expirace?.ToString("d.M.yyyy") ?? "—")</td></tr>
+            }
         </tbody>
     </table>
 
@@ -46,15 +76,205 @@
     </div>
 </div>
 
-<div class="card">
-    <h2>Odkaz pro NFC štítek (NTAG215)</h2>
-    <p class="muted">Tento odkaz zapiš do NFC štítku (např. aplikací NFC Tools) jako NDEF URI záznam. Po přiložení telefonu se otevře veřejná stránka položky bez nutnosti přihlášení.</p>
-    <div class="nfc-url">
-        <input type="text" readonly value="@Model.VerejnaUrl" id="nfc-url" onclick="this.select()" />
-        <button type="button" class="btn btn--secondary" onclick="navigator.clipboard.writeText(document.getElementById('nfc-url').value)">Kopírovat</button>
+@if (Model.Polozka.MaVlastniNfcKartu)
+{
+    <div class="card">
+        <h2>Odkaz pro NFC štítek (NTAG215)</h2>
+        <p class="muted">Tento odkaz zapiš do NFC štítku (např. aplikací NFC Tools) jako NDEF URI záznam. Po přiložení telefonu se otevře veřejná stránka bez nutnosti přihlášení.</p>
+        <div class="nfc-url">
+            <input type="text" readonly value="@Model.VerejnaUrl" id="nfc-url" onclick="this.select()" />
+            <button type="button" class="btn btn--secondary" onclick="navigator.clipboard.writeText(document.getElementById('nfc-url').value)">Kopírovat</button>
+        </div>
     </div>
-</div>
+}
+else
+{
+    <div class="card">
+        <p class="muted">Tato položka nemá vlastní NFC kartu — je vedená jen jako obsah kontejneru výše. Veřejná stránka <code>@Model.VerejnaUrl</code> funguje i tak, ale žádný fyzický štítek pro ni nebyl napsán.</p>
+    </div>
+}
 
+@if (Model.Polozka.Rezim is NfcRezim.Kontejner or NfcRezim.PrvniPomoc)
+{
+    <div class="card">
+        <h2>Obsah</h2>
+
+        @if (Model.Polozka.Obsah.Count == 0)
+        {
+            <p class="muted">Zatím žádný předmět.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Název</th>
+                        <th>Vlastní NFC</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model.Polozka.Obsah)
+                    {
+                        <tr>
+                            <td><a href="/Polozky/Detail?id=@o.Id">@o.Nazev</a></td>
+                            <td>@(o.MaVlastniNfcKartu ? "ano" : "ne")</td>
+                            <td>
+                                <form method="post" asp-page-handler="OdebratObsah" onsubmit="return confirm('Vyjmout předmět z kontejneru? Předmět samotný zůstane, jen se odpojí.');">
+                                    <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                    <input type="hidden" name="obsahId" value="@o.Id" />
+                                    <button class="btn btn--secondary" type="submit">Vyjmout</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <h3>Přidat předmět do obsahu</h3>
+        <form method="post" asp-page-handler="PridatObsah">
+            <input type="hidden" name="id" value="@Model.Polozka.Id" />
+            <div class="form-grid">
+                <div class="field">
+                    <label for="NovyObsah_Nazev">Název *</label>
+                    <input id="NovyObsah_Nazev" type="text" asp-for="NovyObsah.Nazev" />
+                    <span asp-validation-for="NovyObsah.Nazev" class="muted" style="color:var(--danger);"></span>
+                </div>
+                <div class="field">
+                    <label><input type="checkbox" asp-for="NovyObsah.MaVlastniNfcKartu" /> tento předmět má vlastní NFC kartu</label>
+                </div>
+            </div>
+            <button class="btn" type="submit">Přidat do obsahu</button>
+        </form>
+        <p class="muted">Předmět jde po přidání dále doplnit (výrobce, sériové číslo, kategorie…) na jeho vlastní stránce.</p>
+    </div>
+}
+
+@if (Model.Polozka.Rezim == NfcRezim.Lekarnicka)
+{
+    <div class="card">
+        <h2>Léky a prostředky</h2>
+
+        @if (Model.Polozka.Leky.Count == 0)
+        {
+            <p class="muted">Zatím žádný záznam.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Název</th>
+                        <th>Druh</th>
+                        <th>Na co</th>
+                        <th>Pro koho</th>
+                        <th>Předpis</th>
+                        <th>Dávkování</th>
+                        <th>Expirace</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model.Polozka.Leky)
+                    {
+                        var prosle = l.Expirace.HasValue && l.Expirace.Value < DateOnly.FromDateTime(DateTime.Today);
+                        <tr>
+                            <td>@l.Nazev</td>
+                            <td>@(l.JeLek ? "lék" : "prostředek")</td>
+                            <td>@(l.NaCoJe ?? "—")</td>
+                            <td>@(l.ProKoho ?? "—")</td>
+                            <td>@(l.NaPredpis ? "ano" : "ne")</td>
+                            <td>@(l.Davkovani ?? "—")</td>
+                            <td>
+                                @if (l.Expirace.HasValue)
+                                {
+                                    <span class="badge @(prosle ? "badge--overdue" : "badge--ok")">@l.Expirace.Value.ToString("d.M.yyyy")</span>
+                                }
+                                else
+                                {
+                                    <text>—</text>
+                                }
+                            </td>
+                            <td>
+                                <form method="post" asp-page-handler="SmazatLek" onsubmit="return confirm('Smazat záznam?');">
+                                    <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                    <input type="hidden" name="lekId" value="@l.Id" />
+                                    <button class="btn btn--secondary" type="submit">Smazat</button>
+                                </form>
+                            </td>
+                        </tr>
+                        @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky) || !string.IsNullOrWhiteSpace(l.Interakce))
+                        {
+                            <tr>
+                                <td colspan="8" class="muted">
+                                    @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky))
+                                    {
+                                        <div><strong>Nežádoucí účinky:</strong> @l.NezadouciUcinky</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(l.Interakce))
+                                    {
+                                        <div><strong>Nekombinovat s:</strong> @l.Interakce</div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+
+        <h3>Přidat lék / prostředek</h3>
+        <form method="post" asp-page-handler="PridatLek">
+            <input type="hidden" name="id" value="@Model.Polozka.Id" />
+            <div class="form-grid">
+                <div class="field">
+                    <label for="NovyLek_Nazev">Název přípravku *</label>
+                    <input id="NovyLek_Nazev" type="text" asp-for="NovyLek.Nazev" />
+                    <span asp-validation-for="NovyLek.Nazev" class="muted" style="color:var(--danger);"></span>
+                </div>
+                <div class="field">
+                    <label><input type="checkbox" asp-for="NovyLek.JeLek" /> je to lék (ne jen prostředek, např. náplast)</label>
+                </div>
+                <div class="field">
+                    <label for="NovyLek_NaCoJe">Na co je</label>
+                    <input id="NovyLek_NaCoJe" type="text" asp-for="NovyLek.NaCoJe" />
+                </div>
+                <div class="field">
+                    <label for="NovyLek_ProKoho">Pro koho (v rodině)</label>
+                    <input id="NovyLek_ProKoho" type="text" asp-for="NovyLek.ProKoho" />
+                </div>
+                <div class="field">
+                    <label><input type="checkbox" asp-for="NovyLek.NaPredpis" /> na předpis</label>
+                </div>
+                <div class="field">
+                    <label for="NovyLek_Davkovani">Dávkování</label>
+                    <input id="NovyLek_Davkovani" type="text" asp-for="NovyLek.Davkovani" />
+                </div>
+                <div class="field">
+                    <label for="NovyLek_Expirace">Expirace</label>
+                    <input id="NovyLek_Expirace" type="date" asp-for="NovyLek.Expirace" />
+                </div>
+            </div>
+            <div class="field">
+                <label for="NovyLek_NezadouciUcinky">Nežádoucí účinky</label>
+                <textarea id="NovyLek_NezadouciUcinky" asp-for="NovyLek.NezadouciUcinky"></textarea>
+            </div>
+            <div class="field">
+                <label for="NovyLek_Interakce">S čím se nesmí kombinovat (jiný lék, alkohol…)</label>
+                <textarea id="NovyLek_Interakce" asp-for="NovyLek.Interakce"></textarea>
+            </div>
+            <div class="field">
+                <label for="NovyLek_Poznamka">Poznámka</label>
+                <textarea id="NovyLek_Poznamka" asp-for="NovyLek.Poznamka"></textarea>
+            </div>
+            <button class="btn" type="submit">Přidat</button>
+        </form>
+    </div>
+}
+
+@if (Model.Polozka.SledovatServis || Model.Polozka.SledovatRevizi || Model.Polozka.ServisniZaznamy.Count > 0)
+{
 <div class="card">
     <h2>Servis a opravy</h2>
 
@@ -137,7 +357,10 @@
         <button class="btn" type="submit">Přidat záznam</button>
     </form>
 </div>
+}
 
+@if (Model.Polozka.SledovatPojisteni || Model.Polozka.Pojisteni.Count > 0)
+{
 <div class="card">
     <h2>Pojištění</h2>
 
@@ -217,3 +440,4 @@
         <button class="btn" type="submit">Přidat pojištění</button>
     </form>
 </div>
+}

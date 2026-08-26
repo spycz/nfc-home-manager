@@ -15,12 +15,14 @@ public class IndexModel(AppDbContext db) : PageModel
     public string? Q { get; set; }
     public int? KategorieId { get; set; }
     public int? MistnostId { get; set; }
+    public NfcRezim? Rezim { get; set; }
 
-    public async Task OnGetAsync(string? q, int? kategorieId, int? mistnostId, CancellationToken ct)
+    public async Task OnGetAsync(string? q, int? kategorieId, int? mistnostId, NfcRezim? rezim, CancellationToken ct)
     {
         Q = q;
         KategorieId = kategorieId;
         MistnostId = mistnostId;
+        Rezim = rezim;
 
         VsechnyKategorie = await db.Kategorie.OrderBy(k => k.Nazev).ToListAsync(ct);
         VsechnyMistnosti = await db.Mistnosti.OrderBy(m => m.Nazev).ToListAsync(ct);
@@ -28,6 +30,7 @@ public class IndexModel(AppDbContext db) : PageModel
         var query = db.Polozky
             .Include(p => p.Kategorie)
             .Include(p => p.Mistnost)
+            .Include(p => p.Kontejner)
             .Where(p => p.Aktivni)
             .AsQueryable();
 
@@ -50,6 +53,11 @@ public class IndexModel(AppDbContext db) : PageModel
         if (mistnostId.HasValue)
         {
             query = query.Where(p => p.MistnostId == mistnostId);
+        }
+
+        if (rezim.HasValue)
+        {
+            query = query.Where(p => p.Rezim == rezim);
         }
 
         Polozky = await query.OrderBy(p => p.Nazev).ToListAsync(ct);
