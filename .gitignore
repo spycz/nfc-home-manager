@@ -20,3 +20,4 @@ nfc-home.db-wal
 App_Data/
 
 .DS_Store
+appsettings.json
