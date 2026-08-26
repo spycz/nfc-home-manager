@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>NfcHomeManager</RootNamespace>
     <UserSecretsId>b4b8f5a0-6d1e-4a7a-9d7a-3b1f2c9e2a11</UserSecretsId>
+    <!-- Sdílí IIS app pool na Forpsi s hlavním webem Scitani1921 -
+         in-process hosting povoluje jen jednu ASP.NET Core appku na pool. -->
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
   <ItemGroup>
