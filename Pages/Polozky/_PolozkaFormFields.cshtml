@@ -103,14 +103,35 @@
         <input id="Input_SerioveCislo" type="text" asp-for="SerioveCislo" />
     </div>
     <div class="field">
+        <label for="Input_Ean">Čárový kód (EAN)</label>
+        <div class="barcode-row">
+            <input id="Input_Ean" type="text" inputmode="numeric" asp-for="Ean" />
+            <button type="button" class="btn btn--secondary"
+                    data-barcode-scan
+                    data-ean-target="Input_Ean"
+                    data-name-target="Input_Nazev"
+                    data-brand-target="Input_Vyrobce">Skenovat</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="Input_Mnozstvi">Množství</label>
+        <input id="Input_Mnozstvi" type="number" step="0.01" min="0" asp-for="Mnozstvi" />
+    </div>
+    <div class="field">
+        <label for="Input_Jednotka">Jednotka</label>
+        <input id="Input_Jednotka" type="text" asp-for="Jednotka" placeholder="ks, kg, l…" />
+    </div>
+
+    <div class="field">
         <label for="Input_DatumPorizeni">Datum pořízení</label>
         <input id="Input_DatumPorizeni" type="date" asp-for="DatumPorizeni" />
     </div>
-
     <div class="field">
         <label for="Input_CenaKc">Cena (Kč)</label>
         <input id="Input_CenaKc" type="number" step="0.01" min="0" asp-for="CenaKc" />
     </div>
+
     <div class="field">
         <label for="Input_ZarukaMesice">Záruka (měsíců)</label>
         <input id="Input_ZarukaMesice" type="number" min="0" max="240" asp-for="ZarukaMesice" />

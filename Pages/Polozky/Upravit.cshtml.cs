@@ -36,6 +36,9 @@ public class UpravitModel(AppDbContext db) : PageModel
             Vyrobce = polozka.Vyrobce,
             Model = polozka.Model,
             SerioveCislo = polozka.SerioveCislo,
+            Ean = polozka.Ean,
+            Mnozstvi = polozka.Mnozstvi,
+            Jednotka = polozka.Jednotka,
             DatumPorizeni = polozka.DatumPorizeni,
             CenaKc = polozka.CenaKc,
             ZarukaMesice = polozka.ZarukaMesice,
@@ -84,6 +87,9 @@ public class UpravitModel(AppDbContext db) : PageModel
         polozka.Vyrobce = Input.Vyrobce;
         polozka.Model = Input.Model;
         polozka.SerioveCislo = Input.SerioveCislo;
+        polozka.Ean = Input.Ean;
+        polozka.Mnozstvi = Input.Mnozstvi;
+        polozka.Jednotka = Input.Jednotka;
         polozka.DatumPorizeni = Input.DatumPorizeni;
         polozka.CenaKc = Input.CenaKc;
         polozka.ZarukaMesice = Input.ZarukaMesice;

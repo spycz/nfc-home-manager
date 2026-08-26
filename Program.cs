@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using NfcHomeManager.Data;
 using NfcHomeManager.Services;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
 
 namespace NfcHomeManager;
@@ -91,6 +93,13 @@ public class Program
 
         builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
+        // Vyhledani nazvu vyrobku podle naskenovaneho carove kodu (viz /api/barcode).
+        builder.Services.AddHttpClient("barcode", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("NfcHomeManager/1.0 (+https://nfc.scitani1921.cz)");
+        });
+
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())
@@ -113,7 +122,7 @@ public class Program
             headers[HeaderNames.XContentTypeOptions] = "nosniff";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             headers["X-Frame-Options"] = "SAMEORIGIN";
-            headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=(), payment=(), usb=()";
+            headers["Permissions-Policy"] = "geolocation=(), camera=(self), microphone=(), payment=(), usb=()";
             headers["Cross-Origin-Opener-Policy"] = "same-origin";
             headers["Cross-Origin-Resource-Policy"] = "same-origin";
             headers["Content-Security-Policy"] =
@@ -130,6 +139,53 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Pomocny lookup pro naskenovany carovy kod - zkusi najit nazev/znacku
+        // produktu ve verejne databazi Open Food Facts (obecne produkty, ne
+        // specificky leky - pro CZ leky neexistuje verejne znama API klicovana
+        // EAN kodem, jen bulk open data SUKL). Selze potichu, uzivatel dopise
+        // nazev rucne. Jen pro prihlasene - je to pomucka pro editaci, ne
+        // verejny proxy.
+        app.MapGet("/api/barcode/{ean}", async (string ean, IHttpClientFactory httpClientFactory, CancellationToken ct) =>
+        {
+            if (!Regex.IsMatch(ean, @"^\d{6,14}$"))
+            {
+                return Results.BadRequest();
+            }
+
+            var client = httpClientFactory.CreateClient("barcode");
+
+            try
+            {
+                using var response = await client.GetAsync(
+                    $"https://world.openfoodfacts.org/api/v2/product/{ean}.json?fields=product_name,brands", ct);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    using var stream = await response.Content.ReadAsStreamAsync(ct);
+                    using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+                    var root = doc.RootElement;
+
+                    if (root.TryGetProperty("status", out var status) && status.GetInt32() == 1 &&
+                        root.TryGetProperty("product", out var product))
+                    {
+                        var name = product.TryGetProperty("product_name", out var n) ? n.GetString() : null;
+                        var brand = product.TryGetProperty("brands", out var b) ? b.GetString() : null;
+
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            return Results.Ok(new { found = true, name, brand });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+            {
+                // Vnejsi sluzba nedostupna/pomala - zadny vysledek, ne chyba stranky.
+            }
+
+            return Results.Ok(new { found = false });
+        }).RequireAuthorization();
 
         app.MapRazorPages();
 

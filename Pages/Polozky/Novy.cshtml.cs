@@ -43,6 +43,9 @@ public class NovyModel(AppDbContext db) : PageModel
             Vyrobce = Input.Vyrobce,
             Model = Input.Model,
             SerioveCislo = Input.SerioveCislo,
+            Ean = Input.Ean,
+            Mnozstvi = Input.Mnozstvi,
+            Jednotka = Input.Jednotka,
             DatumPorizeni = Input.DatumPorizeni,
             CenaKc = Input.CenaKc,
             ZarukaMesice = Input.ZarukaMesice,
@@ -102,6 +105,15 @@ public class PolozkaFormInput
 
     [StringLength(40)]
     public string? NfcUid { get; set; }
+
+    [StringLength(20)]
+    public string? Ean { get; set; }
+
+    [Range(0, 1_000_000)]
+    public decimal? Mnozstvi { get; set; }
+
+    [StringLength(20)]
+    public string? Jednotka { get; set; }
 
     public DateOnly? DatumPorizeni { get; set; }
 

@@ -91,13 +91,52 @@ pod `AdminAuth:PasswordHash`.
 - `noindex` meta tag na všech stránkách + `robots.txt` zakazující
   procházení — inventář domácnosti (a hlavně lékárnička) se nemá dostat
   do vyhledávačů.
-- **Zvaž:** veřejná stránka `/p/{kod}` je záměrně bez přihlášení (to je
-  celý smysl NFC skenování), kód má dost entropie na to, aby se nedal
-  prakticky uhodnout, ale kdokoliv se štítkem (nebo odkazem) uvidí obsah
-  bez ověření. U lékárničky to znamená rodinné zdravotní údaje. Pokud by
-  to vadilo, dá se přidat krátký PIN navíc jen pro `Lekarnicka`/`PrvniPomoc`
-  režim — zatím to není implementováno, protože je to kompromis rychlost
-  vs. soukromí, který má smysl nechat na tobě.
+- Veřejná stránka `/p/{kod}` je bez přihlášení pro běžné předměty a
+  krabice — smysl NFC skenování (fyzická blízkost pár cm ke štítku je
+  dost silná "důvěra"). **Lékárnička a první pomoc jsou výjimka:** ty
+  nesou rodinná zdravotní data, takže `/p/{kod}` na ně vyžaduje
+  přihlášení, pokud dané zařízení/prohlížeč ještě není přihlášené.
+  Prakticky to znamená: na svém telefonu se přihlásíš jednou (30denní
+  cookie se sama prodlužuje), pak skenuješ bez dalšího otravování; z
+  cizího PC nebo prohlížeče, který se nikdy nepřihlásil, tě to pošle na
+  login. Implementováno v `Pages/P/Index.cshtml.cs`.
+
+### Množství
+
+Položky i jednotlivé léky/prostředky mají volitelné `Množství` +
+`Jednotka` (např. „20 ks“, „1.5 kg“). Na detailu i ve výpisu léků v
+lékárničce je u nich rychlé tlačítko **−1 / +1** pro odškrtnutí
+spotřeby bez otevírání celého editačního formuláře.
+
+### Skenování čárových kódů
+
+Formuláře pro novou/upravovanou položku a pro přidání léku mají pole
+**EAN** s tlačítkem *Skenovat*, které otevře kameru (vyžaduje HTTPS
+nebo `localhost`/`127.0.0.1`) a čárový kód přečte přímo v prohlížeči —
+knihovna `@zxing/browser` (MIT) je vendorovaná lokálně v
+`wwwroot/js/vendor/zxing-browser.min.js`, žádné CDN, kvůli přísné CSP.
+
+Po rozpoznání kódu se zavolá vlastní endpoint `/api/barcode/{ean}`
+(jen pro přihlášené), který zkusí dohledat název/značku produktu ve
+veřejné databázi **Open Food Facts** (obecné produkty, zdarma, bez
+klíče) a předvyplní název/výrobce. Pokud produkt nenajde nebo je
+služba nedostupná, potichu selže — EAN zůstane vyplněný, název se
+dopíše ručně.
+
+**Poznámka k lékům:** Open Food Facts je zaměřená na potraviny a
+běžné spotřební zboží, ne na léčiva — u konkrétních léků tedy lookup
+často nic nenajde. Pro české léky existuje otevřená databáze SÚKL
+(opendata.sukl.cz), ale je to bulk export dat (CSV/XML), ne živé REST
+API klíčované EAN kódem z krabičky — nenašel jsem způsob, jak ho
+spolehlivě napojit na sken, aniž bych si ta data sám stáhl a
+naindexoval. Pokud znáš konkrétní veřejné API pro české léky podle
+EAN, dá se to doplnit; jinak u léků sken alespoň uloží kód pro
+pozdější dohledání a název se dopisuje ručně.
+
+Poznámka ke kompatibilitě: `@zxing/browser` funguje na desktopu
+(Chrome/Edge) i v mobilním Safari (iPhone) přes standardní
+`getUserMedia` — na rozdíl od nativního prohlížečového
+`BarcodeDetector` API, které Safari nepodporuje.
 
 ## Lokální spuštění
 

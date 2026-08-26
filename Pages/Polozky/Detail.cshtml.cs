@@ -184,6 +184,9 @@ public class DetailModel(AppDbContext db) : PageModel
             LekarnickaId = id,
             Nazev = NovyLek.Nazev.Trim(),
             JeLek = NovyLek.JeLek,
+            Ean = NovyLek.Ean,
+            Mnozstvi = NovyLek.Mnozstvi,
+            Jednotka = NovyLek.Jednotka,
             NaCoJe = NovyLek.NaCoJe,
             ProKoho = NovyLek.ProKoho,
             NaPredpis = NovyLek.NaPredpis,
@@ -204,6 +207,32 @@ public class DetailModel(AppDbContext db) : PageModel
         if (lek is not null)
         {
             db.Leky.Remove(lek);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    // Rychla uprava mnozstvi o +/-1 (napr. "vzal jsem si prasek", "pouzil sroub"),
+    // beze nutnosti otevirat cely editacni formular. Nejde pod nulu.
+    public async Task<IActionResult> OnPostUpravitMnozstviAsync(int id, decimal delta, CancellationToken ct)
+    {
+        var polozka = await db.Polozky.FindAsync([id], ct);
+        if (polozka is not null)
+        {
+            polozka.Mnozstvi = Math.Max(0, (polozka.Mnozstvi ?? 0) + delta);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    public async Task<IActionResult> OnPostUpravitMnozstviLekuAsync(int id, int lekId, decimal delta, CancellationToken ct)
+    {
+        var lek = await db.Leky.FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
+        if (lek is not null)
+        {
+            lek.Mnozstvi = Math.Max(0, (lek.Mnozstvi ?? 0) + delta);
             await db.SaveChangesAsync(ct);
         }
 
@@ -329,6 +358,15 @@ public class NovyLekInput
     public string Nazev { get; set; } = string.Empty;
 
     public bool JeLek { get; set; } = true;
+
+    [StringLength(20)]
+    public string? Ean { get; set; }
+
+    [Range(0, 1_000_000)]
+    public decimal? Mnozstvi { get; set; }
+
+    [StringLength(20)]
+    public string? Jednotka { get; set; }
 
     [StringLength(200)]
     public string? NaCoJe { get; set; }

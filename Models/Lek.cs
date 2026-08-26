@@ -13,6 +13,12 @@ public class Lek
     public string Nazev { get; set; } = string.Empty;
     public bool JeLek { get; set; } = true;
 
+    // Carovy kod z krabicky - vyplni se rucne nebo naskenovanim kamerou.
+    public string? Ean { get; set; }
+
+    public decimal? Mnozstvi { get; set; }
+    public string? Jednotka { get; set; }
+
     public string? NaCoJe { get; set; }
     public string? ProKoho { get; set; }
     public bool NaPredpis { get; set; }

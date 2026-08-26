@@ -19,6 +19,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(p => p.Kod).IsUnique();
             entity.HasIndex(p => p.NfcUid).IsUnique().HasFilter("NfcUid IS NOT NULL");
             entity.Property(p => p.CenaKc).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.Mnozstvi).HasColumnType("decimal(18,3)");
             entity.Property(p => p.Rezim).HasConversion<string>();
             entity.Property(p => p.Specializace).HasConversion<string>();
 
@@ -42,6 +43,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Lek>(entity =>
         {
+            entity.Property(l => l.Mnozstvi).HasColumnType("decimal(18,3)");
+
             entity.HasOne(l => l.Lekarnicka)
                 .WithMany(p => p.Leky)
                 .HasForeignKey(l => l.LekarnickaId)

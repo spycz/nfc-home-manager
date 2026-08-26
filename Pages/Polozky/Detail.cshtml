@@ -46,7 +46,29 @@
             <tr><th>Výrobce</th><td>@(Model.Polozka.Vyrobce ?? "—")</td></tr>
             <tr><th>Typ / model</th><td>@(Model.Polozka.Model ?? "—")</td></tr>
             <tr><th>Sériové číslo</th><td>@(Model.Polozka.SerioveCislo ?? "—")</td></tr>
+            <tr><th>Čárový kód</th><td>@(Model.Polozka.Ean ?? "—")</td></tr>
             <tr><th>NFC UID</th><td>@(Model.Polozka.NfcUid ?? "—")</td></tr>
+            @if (Model.Polozka.Mnozstvi.HasValue)
+            {
+                <tr>
+                    <th>Množství</th>
+                    <td>
+                        <div class="qty-row">
+                            <span>@Model.Polozka.Mnozstvi.Value.ToString("0.##") @Model.Polozka.Jednotka</span>
+                            <form method="post" asp-page-handler="UpravitMnozstvi">
+                                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                <input type="hidden" name="delta" value="-1" />
+                                <button class="btn btn--secondary" type="submit">−1</button>
+                            </form>
+                            <form method="post" asp-page-handler="UpravitMnozstvi">
+                                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                <input type="hidden" name="delta" value="1" />
+                                <button class="btn btn--secondary" type="submit">+1</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
             <tr><th>Datum pořízení</th><td>@(Model.Polozka.DatumPorizeni?.ToString("d.M.yyyy") ?? "—")</td></tr>
             <tr><th>Cena</th><td>@(Model.Polozka.CenaKc?.ToString("N0") is { } cena ? $"{cena} Kč" : "—")</td></tr>
             <tr>
@@ -190,6 +212,7 @@ else
                         <th>Pro koho</th>
                         <th>Předpis</th>
                         <th>Dávkování</th>
+                        <th>Množství</th>
                         <th>Expirace</th>
                         <th></th>
                     </tr>
@@ -205,6 +228,30 @@ else
                             <td>@(l.ProKoho ?? "—")</td>
                             <td>@(l.NaPredpis ? "ano" : "ne")</td>
                             <td>@(l.Davkovani ?? "—")</td>
+                            <td>
+                                @if (l.Mnozstvi.HasValue)
+                                {
+                                    <div class="qty-row">
+                                        <span>@l.Mnozstvi.Value.ToString("0.##") @l.Jednotka</span>
+                                        <form method="post" asp-page-handler="UpravitMnozstviLeku">
+                                            <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                            <input type="hidden" name="lekId" value="@l.Id" />
+                                            <input type="hidden" name="delta" value="-1" />
+                                            <button class="btn btn--secondary" type="submit">−1</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="UpravitMnozstviLeku">
+                                            <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                            <input type="hidden" name="lekId" value="@l.Id" />
+                                            <input type="hidden" name="delta" value="1" />
+                                            <button class="btn btn--secondary" type="submit">+1</button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <text>—</text>
+                                }
+                            </td>
                             <td>
                                 @if (l.Expirace.HasValue)
                                 {
@@ -226,7 +273,7 @@ else
                         @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky) || !string.IsNullOrWhiteSpace(l.Interakce))
                         {
                             <tr>
-                                <td colspan="8" class="muted">
+                                <td colspan="9" class="muted">
                                     @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky))
                                     {
                                         <div><strong>Nežádoucí účinky:</strong> @l.NezadouciUcinky</div>
@@ -253,6 +300,16 @@ else
                     <span asp-validation-for="NovyLek.Nazev" class="muted" style="color:var(--danger);"></span>
                 </div>
                 <div class="field">
+                    <label for="NovyLek_Ean">Čárový kód (EAN)</label>
+                    <div class="barcode-row">
+                        <input id="NovyLek_Ean" type="text" inputmode="numeric" asp-for="NovyLek.Ean" />
+                        <button type="button" class="btn btn--secondary"
+                                data-barcode-scan
+                                data-ean-target="NovyLek_Ean"
+                                data-name-target="NovyLek_Nazev">Skenovat</button>
+                    </div>
+                </div>
+                <div class="field">
                     <label><input type="checkbox" asp-for="NovyLek.JeLek" /> je to lék (ne jen prostředek, např. náplast)</label>
                 </div>
                 <div class="field">
@@ -269,6 +326,14 @@ else
                 <div class="field">
                     <label for="NovyLek_Davkovani">Dávkování</label>
                     <input id="NovyLek_Davkovani" type="text" asp-for="NovyLek.Davkovani" />
+                </div>
+                <div class="field">
+                    <label for="NovyLek_Mnozstvi">Množství</label>
+                    <input id="NovyLek_Mnozstvi" type="number" step="0.01" min="0" asp-for="NovyLek.Mnozstvi" />
+                </div>
+                <div class="field">
+                    <label for="NovyLek_Jednotka">Jednotka</label>
+                    <input id="NovyLek_Jednotka" type="text" asp-for="NovyLek.Jednotka" placeholder="ks, balení…" />
                 </div>
                 <div class="field">
                     <label for="NovyLek_Expirace">Expirace</label>
@@ -459,4 +524,9 @@ else
         <button class="btn" type="submit">Přidat pojištění</button>
     </form>
 </div>
+}
+
+@section Scripts {
+    <script src="/js/vendor/zxing-browser.min.js" defer></script>
+    <script src="/js/barcode.js" defer></script>
 }

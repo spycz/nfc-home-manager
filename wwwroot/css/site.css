@@ -258,6 +258,63 @@ textarea {
     gap: 0.75rem;
 }
 
+.qty-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.qty-row form {
+    display: inline;
+}
+
+.qty-row button {
+    padding: 0.15rem 0.55rem;
+}
+
+.barcode-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.barcode-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.barcode-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 1000;
+}
+
+.barcode-overlay video {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 10px;
+    background: #111;
+}
+
+.barcode-overlay__hint {
+    color: #fff;
+    margin: 0;
+    text-align: center;
+}
+
+.barcode-overlay__close {
+    background: #fff;
+}
+
 @media (max-width: 640px) {
     .content {
         padding: 1rem;

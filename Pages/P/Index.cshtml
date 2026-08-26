@@ -42,6 +42,10 @@ else
                     {
                         <tr><th>Sériové číslo</th><td>@p.SerioveCislo</td></tr>
                     }
+                    @if (p.Mnozstvi.HasValue)
+                    {
+                        <tr><th>Množství</th><td>@p.Mnozstvi.Value.ToString("0.##") @p.Jednotka</td></tr>
+                    }
                     @if (p.DatumPorizeni.HasValue)
                     {
                         <tr><th>Pořízeno</th><td>@p.DatumPorizeni.Value.ToString("d.M.yyyy")</td></tr>
@@ -141,6 +145,7 @@ else
                             <th>Na co</th>
                             <th>Pro koho</th>
                             <th>Dávkování</th>
+                            <th>Množství</th>
                             <th>Expirace</th>
                         </tr>
                     </thead>
@@ -152,6 +157,7 @@ else
                                 <td>@(l.NaCoJe ?? "—")</td>
                                 <td>@(l.ProKoho ?? "—")</td>
                                 <td>@(l.Davkovani ?? "—")</td>
+                                <td>@(l.Mnozstvi.HasValue ? $"{l.Mnozstvi.Value:0.##} {l.Jednotka}" : "—")</td>
                                 <td>
                                     @if (l.Expirace.HasValue)
                                     {
@@ -166,7 +172,7 @@ else
                             @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky) || !string.IsNullOrWhiteSpace(l.Interakce))
                             {
                                 <tr>
-                                    <td colspan="5" class="muted">
+                                    <td colspan="6" class="muted">
                                         @if (!string.IsNullOrWhiteSpace(l.NezadouciUcinky))
                                         {
                                             <div><strong>Nežádoucí účinky:</strong> @l.NezadouciUcinky</div>

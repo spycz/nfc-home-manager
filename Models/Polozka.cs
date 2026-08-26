@@ -56,6 +56,12 @@ public class Polozka
     public string? Model { get; set; }
     public string? SerioveCislo { get; set; }
 
+    // Carovy kod (EAN) z obalu - vyplni se rucne nebo naskenovanim kamerou.
+    public string? Ean { get; set; }
+
+    public decimal? Mnozstvi { get; set; }
+    public string? Jednotka { get; set; }
+
     public DateOnly? DatumPorizeni { get; set; }
     public decimal? CenaKc { get; set; }
 

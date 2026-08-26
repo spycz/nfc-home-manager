@@ -48,6 +48,7 @@ public class IndexModel(AppDbContext db) : PageModel
                 (p.Vyrobce != null && EF.Functions.Like(p.Vyrobce, like)) ||
                 (p.Model != null && EF.Functions.Like(p.Model, like)) ||
                 (p.SerioveCislo != null && EF.Functions.Like(p.SerioveCislo, like)) ||
+                (p.Ean != null && EF.Functions.Like(p.Ean, like)) ||
                 EF.Functions.Like(p.Kod, like));
         }
 
