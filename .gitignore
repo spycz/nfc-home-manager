@@ -1,0 +1,22 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Secrets / environment-specific config (never commit these)
+appsettings.Production.json
+appsettings.Development.json
+.env.forpsi
+
+# SQLite database files
+nfc-home.db
+nfc-home.db-shm
+nfc-home.db-wal
+App_Data/
+
+.DS_Store

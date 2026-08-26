@@ -71,8 +71,9 @@ hash, nikdy v čitelné podobě. Vygenerování hashe:
 dotnet run -- hash-password TvojeHeslo
 ```
 
-Výstup vlož do `appsettings.Development.json` / `appsettings.Production.json`
-pod `AdminAuth:PasswordHash`.
+Výstup vlož pod `AdminAuth:PasswordHash` do `appsettings.Development.json`
+(lokálně) resp. `appsettings.Production.json` (na hostingu) — oba soubory
+jsou gitignored, založ si je podle přiložených `.example` šablon.
 
 ### Zabezpečení
 
@@ -178,21 +179,22 @@ Poznámka ke kompatibilitě: `@zxing/browser` funguje na desktopu
 ## Lokální spuštění
 
 ```bash
+cp appsettings.Development.json.example appsettings.Development.json
+dotnet run -- hash-password TvojeHeslo   # vlož výstup do PasswordHash výše
 dotnet run
 ```
 
 Aplikace poběží na `https://localhost:<port>` (dle profilu). Bez
-nastaveného `AdminAuth:PasswordHash` se nelze přihlásit — vygeneruj si
-ho příkazem výše.
+nastaveného `AdminAuth:PasswordHash` se nelze přihlásit.
 
 ## Nasazení na Forpsi (subdoména nfc.scitani1921.cz)
 
 Postup vychází z `DEPLOY_FORPSI_WINDOWS.md` hlavního projektu, jen pro
 samostatnou subdoménu:
 
-1. V administraci Forpsi hostingu založ subdoménu `nfc.scitani1921.cz`
-   a zjisti její cílovou složku na FTP (obvykle samostatná `/nfc` nebo
-   zcela nový web root — liší se dle tarifu, ověř v Forpsi panelu).
+1. V administraci Forpsi hostingu založ subdoménu `nfc.scitani1921.cz`.
+   Cílová FTP složka: `/subdoms/nfc` (samostatný web root, mimo hlavní
+   `/www` používaný projektem Scitani1921).
 2. Vytvoř `appsettings.Production.json` podle `appsettings.Production.json.example`
    (vlastní `AdminAuth:PasswordHash`, `AllowedHosts`).
 3. Publish:
