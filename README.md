@@ -179,8 +179,9 @@ Poznámka ke kompatibilitě: `@zxing/browser` funguje na desktopu
 ## Lokální spuštění
 
 ```bash
+cp appsettings.json.example appsettings.json
 cp appsettings.Development.json.example appsettings.Development.json
-dotnet run -- hash-password TvojeHeslo   # vlož výstup do PasswordHash výše
+dotnet run -- hash-password TvojeHeslo   # vlož výstup do PasswordHash v obou souborech
 dotnet run
 ```
 
