@@ -212,3 +212,54 @@ Pokud Forpsi neumožní přiřadit subdoméně vlastní .NET aplikační pool
 odděleně od hlavního webu, je potřeba to vyřešit na úrovni hostingu
 (další webhosting balíček nebo IIS aplikace pod subdoménou) — tahle
 appka na to není nijak vázaná, jen potřebuje vlastní spuštěný proces.
+
+**Ověřeno v praxi:** sdílený app pool s hlavním webem Scitani1921
+nefunguje v žádné kombinaci hosting modelů — ANCM nedovolí ani dvě
+in-process appky v jednom poolu (`500.35`), ani mix in-process a
+out-of-process v jednom poolu (`500.34`). Buď vlastní app pool od
+Forpsi, nebo úplně samostatný hosting (viz níže).
+
+## Nasazení na vlastní Linux server (Oracle Cloud Free Tier apod.)
+
+Alternativa k Forpsi, když sdílený app pool nejde vyřešit — appka běží
+nativně na Linuxu (ASP.NET Core je cross-platform), za reverzní proxy
+Caddy, která se stará o automatické HTTPS. Doménu není potřeba stěhovat
+celou, stačí přesměrovat DNS záznam `nfc.scitani1921.cz` na IP nového
+serveru, zbytek `scitani1921.cz` zůstává na Forpsi beze změny.
+
+1. Založ VM (Ubuntu). Na Oracle Cloud Free Tier nezapomeň kromě
+   lokálního firewallu (`ufw`) povolit porty **80** a **443** i v
+   **VCN → Security Lists → Ingress Rules** — to je nejčastější důvod,
+   proč appka "není vidět" i když na serveru vypadá vše v pořádku.
+2. Spusť jednorázovou přípravu serveru (nainstaluje ASP.NET Core 9
+   runtime, Caddy, vytvoří systémový účet a složky):
+   ```bash
+   sudo bash deploy/setup-server.sh
+   ```
+3. Publish (framework-dependent, běží přes nainstalovaný runtime):
+   ```bash
+   dotnet publish NfcHomeManager.csproj -c Release -o publish/linux
+   ```
+4. Nahraj obsah `publish/linux/` do `/opt/nfc-home-manager` na serveru
+   (scp/rsync), včetně vyplněného `appsettings.Production.json`
+   (`AdminAuth:PasswordHash`, `AllowedHosts: "nfc.scitani1921.cz"`).
+   Slož vlastnictví zpět na servisní účet:
+   ```bash
+   sudo chown -R nfchome:nfchome /opt/nfc-home-manager
+   ```
+5. Nainstaluj systemd službu a Caddy konfiguraci:
+   ```bash
+   sudo cp deploy/nfc-home-manager.service /etc/systemd/system/
+   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now nfc-home-manager
+   sudo systemctl reload caddy
+   ```
+6. Na Forpsi DNS správci subdomény `nfc.scitani1921.cz` přepni `A`
+   záznam na veřejnou IP nového serveru.
+
+Appka běží za reverzní proxy na `127.0.0.1:5299` — proto `Program.cs`
+obsahuje `UseForwardedHeaders`, aby správně poznala, že originální
+požadavek přišel přes HTTPS (jinak by `UseHttpsRedirection` skončil
+v nekonečné smyčce přesměrování) a aby limiter přihlášení počítal podle
+skutečné IP klienta, ne podle IP samotné proxy.

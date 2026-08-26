@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -105,6 +106,14 @@ public class Program
         });
 
         var app = builder.Build();
+
+        // Za reverzni proxy (Caddy/nginx na Linuxu) vidi Kestrel jen prosty HTTP
+        // z 127.0.0.1 - bez tohohle by UseHttpsRedirection zacyklil presmerovani
+        // a rate limiter by kazdy pozadavek pripsal jedine IP proxy.
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
 
         using (var scope = app.Services.CreateScope())
         {

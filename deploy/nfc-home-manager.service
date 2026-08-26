@@ -1,0 +1,19 @@
+[Unit]
+Description=NFC domácnost (nfc.scitani1921.cz)
+After=network.target
+
+[Service]
+Type=notify
+WorkingDirectory=/opt/nfc-home-manager
+ExecStart=/usr/bin/dotnet /opt/nfc-home-manager/NfcHomeManager.dll
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=nfc-home-manager
+User=nfchome
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5299
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,3 @@
+nfc.scitani1921.cz {
+	reverse_proxy 127.0.0.1:5299
+}
