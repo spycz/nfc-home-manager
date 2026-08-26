@@ -144,17 +144,45 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // Pomocny lookup pro naskenovany carovy kod. Nejdriv zkusi rucne
-        // naimportovanou databazi SUKL (viz /Admin/ImportLeku) - ta pokryva
-        // ceske leky presne, jen se musi obcas rucne obnovit novym exportem.
-        // Kdyz tam nic neni, zkusi verejnou Open Food Facts (obecne produkty,
-        // ne leky). Selze potichu, uzivatel dopise nazev rucne. Jen pro
-        // prihlasene - je to pomucka pro editaci, ne verejny proxy.
+        // Pomocny lookup pro naskenovany carovy kod, ve trech krocich:
+        // 1) vlastni historie - uz jsme tenhle EAN nekdy sami zadali (typicky
+        //    pri opakovanem nakupu stejneho leku/vyrobku) - nejspolehlivejsi
+        //    zdroj, protoze je presne z teto domacnosti a nezavisi na zadne
+        //    externi databazi;
+        // 2) rucne naimportovana databaze SUKL (viz /Admin/ImportLeku) - v
+        //    praxi se ukazalo, ze SUKL export EAN skoro/vubec nevyplnuje,
+        //    takze tenhle krok casto nic nenajde, ale kdyby se to zmenilo
+        //    nebo se nasel jiny zdroj se stejnym forematem, uz to funguje;
+        // 3) verejna Open Food Facts (obecne produkty, ne leky).
+        // Selze potichu, uzivatel dopise nazev rucne. Jen pro prihlasene -
+        // je to pomucka pro editaci, ne verejny proxy.
         app.MapGet("/api/barcode/{ean}", async (string ean, AppDbContext db, IHttpClientFactory httpClientFactory, CancellationToken ct) =>
         {
             if (!Regex.IsMatch(ean, @"^\d{6,14}$"))
             {
                 return Results.BadRequest();
+            }
+
+            var vlastniLek = await db.Leky.AsNoTracking()
+                .Where(l => l.Ean == ean && l.Nazev != "")
+                .OrderByDescending(l => l.VytvorenoUtc)
+                .Select(l => new { l.Nazev })
+                .FirstOrDefaultAsync(ct);
+
+            if (vlastniLek is not null)
+            {
+                return Results.Ok(new { found = true, name = vlastniLek.Nazev, brand = (string?)null });
+            }
+
+            var vlastniPolozka = await db.Polozky.AsNoTracking()
+                .Where(p => p.Ean == ean && p.Nazev != "")
+                .OrderByDescending(p => p.VytvorenoUtc)
+                .Select(p => new { p.Nazev, p.Vyrobce })
+                .FirstOrDefaultAsync(ct);
+
+            if (vlastniPolozka is not null)
+            {
+                return Results.Ok(new { found = true, name = vlastniPolozka.Nazev, brand = vlastniPolozka.Vyrobce });
             }
 
             var lek = await db.LekovyKatalog.AsNoTracking().FirstOrDefaultAsync(l => l.Ean == ean, ct);

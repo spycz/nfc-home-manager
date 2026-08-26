@@ -117,16 +117,28 @@ knihovna `@zxing/browser` (MIT) je vendorovaná lokálně v
 `wwwroot/js/vendor/zxing-browser.min.js`, žádné CDN, kvůli přísné CSP.
 
 Po rozpoznání kódu se zavolá vlastní endpoint `/api/barcode/{ean}`
-(jen pro přihlášené), který zkusí dohledat název/značku produktu ve
-veřejné databázi **Open Food Facts** (obecné produkty, zdarma, bez
-klíče) a předvyplní název/výrobce. Pokud produkt nenajde nebo je
-služba nedostupná, potichu selže — EAN zůstane vyplněný, název se
-dopíše ručně.
+(jen pro přihlášené), který hledá ve třech krocích:
+
+1. **Vlastní historie** — už jsi tenhle EAN někdy sám zadal (typicky
+   při opakovaném nákupu stejného léku nebo výrobku). Nejspolehlivější
+   zdroj, protože je přesně z tvojí domácnosti a nezávisí na žádné
+   externí databázi — stačí u léku/položky jednou ručně napsat název a
+   zároveň mít vyplněný naskenovaný EAN, a příště se stejný kód najde
+   okamžitě. V praxi tohle pokryje přesně scénář „vezmu lék, co si
+   kupuju pravidelně, a naskenuju“ — jednorázová investice jednoho
+   ručního zápisu.
+2. **Lokální databáze SÚKL** (viz níže) — pro léky, které jsi ještě
+   nikdy nezadával.
+3. **Open Food Facts** (obecné produkty, zdarma, bez klíče) — spíš pro
+   běžné domácí věci než léky.
+
+Pokud žádný krok nic nenajde, potichu selže — EAN zůstane vyplněný,
+název se dopíše ručně.
 
 **Léky konkrétně:** Open Food Facts je zaměřená na potraviny a běžné
 spotřební zboží, ne na léčiva, takže u konkrétních léků často nic
-nenajde. Pro české léky proto existuje druhá, přesnější cesta —
-lokální databáze SÚKL:
+nenajde. Pro české léky měla sloužit přesnější cesta — lokální databáze
+SÚKL:
 
 ### Databáze léků SÚKL (`/Admin/ImportLeku`)
 
@@ -147,15 +159,16 @@ vývojového sandboxu, kde jsem tohle stavěl) a ručně nahraje na
 - při každém nahrání **celý předchozí obsah nahradí** — spusť znovu,
   kdykoli si stáhneš čerstvější export.
 
-`/api/barcode/{ean}` nejdřív zkusí tuhle lokální databázi (přesné,
-česky, offline) a teprve když nic nenajde, spadne na Open Food Facts.
-
-V ukázkovém exportu, který jsem dostal k ověření, byl sloupec `EAN` u
-všech řádků prázdný — šlo ale o starší registrace (60.–90. léta,
-90. roky), kde se čárové kódy tolik nesledovaly. U novodobějších léků
-očekávám vyplněný sloupec častěji, ale pokrytí bude nutně nerovnoměrné
-— u starých/vzácných přípravků sken může skončit naprázdno i po
-importu, a pak se název dopíše ručně jako dřív.
+**Update po ověření na reálných datech:** sloupec `EAN` je v celém SÚKL
+DLP exportu prázdný, ne jen u starších registrací, jak jsem původně
+předpokládal — SÚKL evidenci vede přes vlastní „Kód SÚKL“, čárové kódy
+GS1/EAN přiděluje jiná autorita (GS1 Czech Republic) a do DLP se zjevně
+nedostávají. Import a `/api/barcode/{ean}` krok pro SÚKL zůstávají v
+kódu (jsou otestované a neškodí), pro případ, že by se to změnilo nebo
+se našel jiný export/dataset se stejným sloupcovým formátem, ale reálně
+teď tenhle krok skoro vždy nic nenajde. Hlavní praktickou hodnotu proto
+má bod 1 výše (vlastní historie) — pokud znáš jiný veřejný zdroj, který
+skutečně mapuje EAN kódy na české léky, klidně pošli odkaz.
 
 Poznámka ke kompatibilitě: `@zxing/browser` funguje na desktopu
 (Chrome/Edge) i v mobilním Safari (iPhone) přes standardní
