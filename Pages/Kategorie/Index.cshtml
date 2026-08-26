@@ -22,7 +22,7 @@
                     <td>@k.Nazev</td>
                     <td>@k.Polozky.Count</td>
                     <td>
-                        <form method="post" asp-page-handler="Smazat" onsubmit="return confirm('Smazat kategorii? Položky zůstanou, jen se odpojí od kategorie.');">
+                        <form method="post" asp-page-handler="Smazat" data-confirm="Smazat kategorii? Položky zůstanou, jen se odpojí od kategorie.">
                             <input type="hidden" name="id" value="@k.Id" />
                             <button class="btn btn--secondary" type="submit">Smazat</button>
                         </form>

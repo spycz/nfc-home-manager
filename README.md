@@ -74,6 +74,31 @@ dotnet run -- hash-password TvojeHeslo
 Výstup vlož do `appsettings.Development.json` / `appsettings.Production.json`
 pod `AdminAuth:PasswordHash`.
 
+### Zabezpečení
+
+- Přihlašovací formulář má vlastní přísný limit (8 požadavků/min na IP),
+  zbytek webu mírnější globální limit — obrana proti hádání hesla hrubou
+  silou.
+- Admin cookie je `HttpOnly`, `SameSite=Lax` a v produkci jen přes HTTPS
+  (`Secure`), v Developmentu jde i po HTTP kvůli lokálnímu testování.
+- Odhlášení jde přes standardní Razor Pages formulář (CSRF token), ne
+  přes holý endpoint.
+- Bezpečnostní hlavičky: CSP (žádné inline skripty — veškeré JS je v
+  `wwwroot/js/site.js`, potvrzovací dialogy a kopírování jdou přes
+  `data-confirm`/`data-copy-target` atributy), HSTS, `X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`,
+  `Cross-Origin-Opener-Policy`.
+- `noindex` meta tag na všech stránkách + `robots.txt` zakazující
+  procházení — inventář domácnosti (a hlavně lékárnička) se nemá dostat
+  do vyhledávačů.
+- **Zvaž:** veřejná stránka `/p/{kod}` je záměrně bez přihlášení (to je
+  celý smysl NFC skenování), kód má dost entropie na to, aby se nedal
+  prakticky uhodnout, ale kdokoliv se štítkem (nebo odkazem) uvidí obsah
+  bez ověření. U lékárničky to znamená rodinné zdravotní údaje. Pokud by
+  to vadilo, dá se přidat krátký PIN navíc jen pro `Lekarnicka`/`PrvniPomoc`
+  režim — zatím to není implementováno, protože je to kompromis rychlost
+  vs. soukromí, který má smysl nechat na tobě.
+
 ## Lokální spuštění
 
 ```bash

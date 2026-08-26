@@ -23,34 +23,44 @@
             <input id="q" type="text" name="q" value="@Model.Q" placeholder="název, výrobce, sériové číslo…" />
         </div>
         <div class="field">
-            <label for="kategorieId">Kategorie</label>
-            <select id="kategorieId" name="kategorieId">
+            <label for="KategorieId">Kategorie</label>
+            <select asp-for="KategorieId">
                 <option value="">Vše</option>
                 @foreach (var k in Model.VsechnyKategorie)
                 {
-                    <option value="@k.Id" selected="@(Model.KategorieId == k.Id)">@k.Nazev</option>
+                    <option value="@k.Id">@k.Nazev</option>
                 }
             </select>
         </div>
         <div class="field">
-            <label for="mistnostId">Místnost</label>
-            <select id="mistnostId" name="mistnostId">
+            <label for="MistnostId">Místnost</label>
+            <select asp-for="MistnostId">
                 <option value="">Vše</option>
                 @foreach (var m in Model.VsechnyMistnosti)
                 {
-                    <option value="@m.Id" selected="@(Model.MistnostId == m.Id)">@m.Nazev</option>
+                    <option value="@m.Id">@m.Nazev</option>
                 }
             </select>
         </div>
         <div class="field">
-            <label for="rezim">Typ NFC karty</label>
-            <select id="rezim" name="rezim">
+            <label for="Rezim">Typ NFC karty</label>
+            <select asp-for="Rezim">
                 <option value="">Vše</option>
                 @foreach (var r in Enum.GetValues<NfcRezim>())
                 {
-                    <option value="@r" selected="@(Model.Rezim == r)">@RezimLabel(r)</option>
+                    <option value="@r">@RezimLabel(r)</option>
                 }
             </select>
+        </div>
+        <div class="field">
+            @if (Model.ZobrazitArchivovane)
+            {
+                <label><input type="checkbox" name="zobrazitArchivovane" value="true" checked /> i archivované</label>
+            }
+            else
+            {
+                <label><input type="checkbox" name="zobrazitArchivovane" value="true" /> i archivované</label>
+            }
         </div>
         <button class="btn" type="submit">Filtrovat</button>
         <a class="btn btn--secondary" href="/Polozky">Zrušit filtr</a>
@@ -82,8 +92,14 @@
             <tbody>
                 @foreach (var p in Model.Polozky)
                 {
-                    <tr>
-                        <td><a href="/Polozky/Detail?id=@p.Id">@p.Nazev</a></td>
+                    <tr class="@(p.Aktivni ? "" : "muted")">
+                        <td>
+                            <a href="/Polozky/Detail?id=@p.Id">@p.Nazev</a>
+                            @if (!p.Aktivni)
+                            {
+                                <span class="badge">archiv</span>
+                            }
+                        </td>
                         <td>
                             <span class="badge">@RezimLabel(p.Rezim)</span>
                             @if (p.Specializace != Specializace.Obecna)

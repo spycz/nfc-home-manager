@@ -1,0 +1,16 @@
+@page
+@model NfcHomeManager.Pages.Admin.ExportModel
+@{
+    ViewData["Title"] = "Export dat";
+}
+
+<h1>Export dat</h1>
+
+<div class="card">
+    <p class="muted">
+        Stáhne kompletní obsah databáze (místnosti, kategorie, položky, servisní
+        záznamy, pojištění, léky) jako jeden JSON soubor. Slouží jako záloha —
+        SQLite soubor na hostingu není odjinud zálohovaný automaticky.
+    </p>
+    <a class="btn" href="/Admin/Export?handler=Stahnout">Stáhnout JSON export</a>
+</div>

@@ -16,6 +16,11 @@
 
 <h1>@Model.Polozka.Nazev</h1>
 
+@if (!Model.Polozka.Aktivni)
+{
+    <div class="alert alert--error">Tato položka je archivovaná — nezobrazuje se v seznamech ani v přehledu upozornění.</div>
+}
+
 <div class="card">
     <p>
         <span class="badge">@RezimLabel(Model.Polozka.Rezim)</span>
@@ -69,7 +74,21 @@
 
     <div class="actions">
         <a class="btn btn--secondary" href="/Polozky/Upravit?id=@Model.Polozka.Id">Upravit</a>
-        <form method="post" asp-page-handler="SmazatPolozku" onsubmit="return confirm('Opravdu smazat tuto položku včetně historie servisu a pojištění?');" style="display:inline;">
+        @if (Model.Polozka.Aktivni)
+        {
+            <form method="post" asp-page-handler="Archivovat" data-confirm="Archivovat položku? Zůstane v databázi i s historií, jen se skryje ze seznamů a upozornění.">
+                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                <button class="btn btn--secondary" type="submit">Archivovat</button>
+            </form>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="Obnovit">
+                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                <button class="btn btn--secondary" type="submit">Obnovit</button>
+            </form>
+        }
+        <form method="post" asp-page-handler="SmazatPolozku" data-confirm="Opravdu trvale smazat tuto položku včetně historie servisu a pojištění? Pokud si nejsi jistý, použij raději Archivovat." style="display:inline;">
             <input type="hidden" name="id" value="@Model.Polozka.Id" />
             <button class="btn btn--danger" type="submit">Smazat</button>
         </form>
@@ -82,8 +101,8 @@
         <h2>Odkaz pro NFC štítek (NTAG215)</h2>
         <p class="muted">Tento odkaz zapiš do NFC štítku (např. aplikací NFC Tools) jako NDEF URI záznam. Po přiložení telefonu se otevře veřejná stránka bez nutnosti přihlášení.</p>
         <div class="nfc-url">
-            <input type="text" readonly value="@Model.VerejnaUrl" id="nfc-url" onclick="this.select()" />
-            <button type="button" class="btn btn--secondary" onclick="navigator.clipboard.writeText(document.getElementById('nfc-url').value)">Kopírovat</button>
+            <input type="text" readonly value="@Model.VerejnaUrl" id="nfc-url" data-select-target="nfc-url" />
+            <button type="button" class="btn btn--secondary" data-copy-target="nfc-url">Kopírovat</button>
         </div>
     </div>
 }
@@ -120,7 +139,7 @@ else
                             <td><a href="/Polozky/Detail?id=@o.Id">@o.Nazev</a></td>
                             <td>@(o.MaVlastniNfcKartu ? "ano" : "ne")</td>
                             <td>
-                                <form method="post" asp-page-handler="OdebratObsah" onsubmit="return confirm('Vyjmout předmět z kontejneru? Předmět samotný zůstane, jen se odpojí.');">
+                                <form method="post" asp-page-handler="OdebratObsah" data-confirm="Vyjmout předmět z kontejneru? Předmět samotný zůstane, jen se odpojí.">
                                     <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                     <input type="hidden" name="obsahId" value="@o.Id" />
                                     <button class="btn btn--secondary" type="submit">Vyjmout</button>
@@ -197,7 +216,7 @@ else
                                 }
                             </td>
                             <td>
-                                <form method="post" asp-page-handler="SmazatLek" onsubmit="return confirm('Smazat záznam?');">
+                                <form method="post" asp-page-handler="SmazatLek" data-confirm="Smazat záznam?">
                                     <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                     <input type="hidden" name="lekId" value="@l.Id" />
                                     <button class="btn btn--secondary" type="submit">Smazat</button>
@@ -307,7 +326,7 @@ else
                         <td>@(s.Provozovna ?? "—")</td>
                         <td>@(s.DalsiTerminDo?.ToString("d.M.yyyy") ?? "—")</td>
                         <td>
-                            <form method="post" asp-page-handler="SmazatServis" onsubmit="return confirm('Smazat záznam?');">
+                            <form method="post" asp-page-handler="SmazatServis" data-confirm="Smazat záznam?">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="servisId" value="@s.Id" />
                                 <button class="btn btn--secondary" type="submit">Smazat</button>
@@ -391,7 +410,7 @@ else
                         <td>@(i.PlatnostOd?.ToString("d.M.yyyy") ?? "?") – @(i.PlatnostDo?.ToString("d.M.yyyy") ?? "?")</td>
                         <td>@(i.RocniCenaKc?.ToString("N0") is { } r ? $"{r} Kč" : "—")</td>
                         <td>
-                            <form method="post" asp-page-handler="SmazatPojisteni" onsubmit="return confirm('Smazat pojištění?');">
+                            <form method="post" asp-page-handler="SmazatPojisteni" data-confirm="Smazat pojištění?">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="pojisteniId" value="@i.Id" />
                                 <button class="btn btn--secondary" type="submit">Smazat</button>

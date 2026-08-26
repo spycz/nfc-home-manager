@@ -16,13 +16,15 @@ public class IndexModel(AppDbContext db) : PageModel
     public int? KategorieId { get; set; }
     public int? MistnostId { get; set; }
     public NfcRezim? Rezim { get; set; }
+    public bool ZobrazitArchivovane { get; set; }
 
-    public async Task OnGetAsync(string? q, int? kategorieId, int? mistnostId, NfcRezim? rezim, CancellationToken ct)
+    public async Task OnGetAsync(string? q, int? kategorieId, int? mistnostId, NfcRezim? rezim, bool zobrazitArchivovane, CancellationToken ct)
     {
         Q = q;
         KategorieId = kategorieId;
         MistnostId = mistnostId;
         Rezim = rezim;
+        ZobrazitArchivovane = zobrazitArchivovane;
 
         VsechnyKategorie = await db.Kategorie.OrderBy(k => k.Nazev).ToListAsync(ct);
         VsechnyMistnosti = await db.Mistnosti.OrderBy(m => m.Nazev).ToListAsync(ct);
@@ -31,8 +33,12 @@ public class IndexModel(AppDbContext db) : PageModel
             .Include(p => p.Kategorie)
             .Include(p => p.Mistnost)
             .Include(p => p.Kontejner)
-            .Where(p => p.Aktivni)
             .AsQueryable();
+
+        if (!zobrazitArchivovane)
+        {
+            query = query.Where(p => p.Aktivni);
+        }
 
         if (!string.IsNullOrWhiteSpace(q))
         {

@@ -222,6 +222,32 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect("/Polozky");
     }
 
+    // Archivace misto mazani - historie (servis, pojisteni) zustava, jen se
+    // polozka prestane pocitat mezi aktivni a nenabizi se v seznamech/pripominkach.
+    public async Task<IActionResult> OnPostArchivovatAsync(int id, CancellationToken ct)
+    {
+        var polozka = await db.Polozky.FindAsync([id], ct);
+        if (polozka is not null)
+        {
+            polozka.Aktivni = false;
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    public async Task<IActionResult> OnPostObnovitAsync(int id, CancellationToken ct)
+    {
+        var polozka = await db.Polozky.FindAsync([id], ct);
+        if (polozka is not null)
+        {
+            polozka.Aktivni = true;
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
     private async Task<bool> NacistPolozkuAsync(int id, CancellationToken ct)
     {
         var polozka = await db.Polozky

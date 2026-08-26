@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using NfcHomeManager.Services;
 using System.Security.Claims;
 
 namespace NfcHomeManager.Pages.Admin;
 
+// Prisnejsi rate limit nez zbytek webu - viz policy "login" v Program.cs.
+[EnableRateLimiting("login")]
 public class LoginModel(IConfiguration configuration) : PageModel
 {
     [BindProperty]

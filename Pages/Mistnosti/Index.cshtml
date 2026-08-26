@@ -22,7 +22,7 @@
                     <td>@m.Nazev</td>
                     <td>@m.Polozky.Count</td>
                     <td>
-                        <form method="post" asp-page-handler="Smazat" onsubmit="return confirm('Smazat místnost? Položky zůstanou, jen se odpojí od místnosti.');">
+                        <form method="post" asp-page-handler="Smazat" data-confirm="Smazat místnost? Položky zůstanou, jen se odpojí od místnosti.">
                             <input type="hidden" name="id" value="@m.Id" />
                             <button class="btn btn--secondary" type="submit">Smazat</button>
                         </form>

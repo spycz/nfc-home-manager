@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <title>@(ViewData["Title"] as string ?? "NFC domácnost")</title>
     <link rel="stylesheet" href="/css/site.css" />
@@ -17,8 +17,9 @@
                 <a href="/Polozky">Položky</a>
                 <a href="/Mistnosti">Místnosti</a>
                 <a href="/Kategorie">Kategorie</a>
+                <a href="/Admin/Export">Export dat</a>
             </nav>
-            <form method="post" action="/admin/logout" class="logout-form">
+            <form method="post" asp-page="/Admin/Logout" class="logout-form">
                 <button type="submit">Odhlásit</button>
             </form>
         </header>
@@ -26,5 +27,6 @@
     <main class="content">
         @RenderBody()
     </main>
+    <script src="/js/site.js" defer></script>
 </body>
 </html>
