@@ -1,0 +1,14 @@
+Hostname;TTL;Type;Value
+scitani1921.cz;1800;A;81.2.195.116
+nfc.scitani1921.cz;1800;A;193.122.14.28
+noproxy_69d508fbea450.scitani1921.cz;1800;A;81.2.195.116
+www.scitani1921.cz;1800;A;81.2.195.116
+*.scitani1921.cz;1800;CNAME;noproxy_69d508fbea450.scitani1921.cz
+autoconfig.scitani1921.cz;1800;CNAME;autoconfig.forpsi.com
+autodiscover.scitani1921.cz;1800;CNAME;autodiscover.forpsi.com
+scitani1921.cz;1800;MX;"10 mxavas.forpsi.com"
+_caldavs._tcp.scitani1921.cz;1800;SRV;"0 1 443 syncdav.forpsi.com"
+_carddavs._tcp.scitani1921.cz;1800;SRV;"0 1 443 syncdav.forpsi.com"
+scitani1921.cz;1800;TXT;"v=spf1 a mx include:_spf.forpsi.com -all"
+_dmarc.scitani1921.cz;1800;TXT;"v=DMARC1; p=quarantine"
+f2025._domainkey.scitani1921.cz;1800;TXT;"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqYH0a6v3lZrQypk4fO2XQ5cRvqYgyH/kDdk97pRHnfOQZB36OrEqwXzVPsjUNGueh7WOkumIFd3wvzOOrYqfLIoDVpQRtAmhhNBr35h4TlJUNspo2Z9m2mMdul8Uc/pcjT6XPdX6DJle+GyqAvWMl7sER74RBBrDwisVGnICd1+BfpRo04JfOLcukxfm+FObIFrIqtlgO5Y5NyKbBu0zb2aBT/OrFOtJU7UHtkJMswDxhCVWoPpWwkrbpd8IP3nNE5+H27+HflMyybnLeRALVfsocSXsKl//bQlAfY/mkgvteluD1qSS18Fwqgs6CEN/v1EmqoAnkNkBlbam33lRqwIDAQAB"

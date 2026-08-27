@@ -1,0 +1,190 @@
+{
+  "ExportovanoUtc": "2026-08-27T20:36:00.8817641Z",
+  "Mistnosti": [
+    {
+      "Id": 1,
+      "Nazev": "Ob\u00FDvac\u00ED pokoj",
+      "Polozky": []
+    },
+    {
+      "Id": 2,
+      "Nazev": "Kuchy\u0148",
+      "Polozky": []
+    },
+    {
+      "Id": 3,
+      "Nazev": "Lo\u017Enice",
+      "Polozky": []
+    },
+    {
+      "Id": 4,
+      "Nazev": "Koupelna",
+      "Polozky": []
+    },
+    {
+      "Id": 5,
+      "Nazev": "Gar\u00E1\u017E",
+      "Polozky": []
+    },
+    {
+      "Id": 6,
+      "Nazev": "D\u00EDlna",
+      "Polozky": []
+    },
+    {
+      "Id": 7,
+      "Nazev": "Sklep",
+      "Polozky": []
+    },
+    {
+      "Id": 8,
+      "Nazev": "Zahrada",
+      "Polozky": []
+    },
+    {
+      "Id": 9,
+      "Nazev": "Technick\u00E1 m\u00EDstnost",
+      "Polozky": []
+    }
+  ],
+  "Kategorie": [
+    {
+      "Id": 1,
+      "Nazev": "Elektronika",
+      "Polozky": []
+    },
+    {
+      "Id": 2,
+      "Nazev": "B\u00EDl\u00E1 technika",
+      "Polozky": []
+    },
+    {
+      "Id": 3,
+      "Nazev": "N\u00E1\u0159ad\u00ED",
+      "Polozky": []
+    },
+    {
+      "Id": 4,
+      "Nazev": "N\u00E1bytek",
+      "Polozky": []
+    },
+    {
+      "Id": 5,
+      "Nazev": "Auto / moto",
+      "Polozky": []
+    },
+    {
+      "Id": 6,
+      "Nazev": "Zahrada",
+      "Polozky": []
+    },
+    {
+      "Id": 7,
+      "Nazev": "Sport",
+      "Polozky": []
+    },
+    {
+      "Id": 8,
+      "Nazev": "Ostatn\u00ED",
+      "Polozky": []
+    }
+  ],
+  "Polozky": [
+    {
+      "Id": 1,
+      "Kod": "SCURQ5A",
+      "NfcUid": null,
+      "Nazev": "Plynov\u00FD kotel",
+      "Rezim": 0,
+      "Specializace": 0,
+      "Spz": null,
+      "KategorieId": 8,
+      "Kategorie": null,
+      "MistnostId": 9,
+      "Mistnost": null,
+      "KontejnerId": null,
+      "Kontejner": null,
+      "Obsah": [],
+      "Leky": [],
+      "Vyrobce": "Baxi",
+      "Model": null,
+      "SerioveCislo": null,
+      "Ean": null,
+      "Mnozstvi": 1,
+      "Jednotka": "Ks",
+      "DatumPorizeni": null,
+      "CenaKc": null,
+      "MaVlastniNfcKartu": true,
+      "SledovatPojisteni": false,
+      "SledovatExpiraci": false,
+      "SledovatServis": true,
+      "SledovatRevizi": false,
+      "Expirace": null,
+      "ZarukaMesice": 24,
+      "ZarukaDo": null,
+      "DalsiServisDo": "2027-08-27",
+      "Aktivni": true,
+      "Poznamka": null,
+      "VytvorenoUtc": "2026-08-27T20:09:00.2806447",
+      "UpravenoUtc": "2026-08-27T20:15:41.1691178",
+      "ServisniZaznamy": [],
+      "Pojisteni": []
+    },
+    {
+      "Id": 2,
+      "Kod": "9C7AY3X",
+      "NfcUid": null,
+      "Nazev": "P\u00E1kov\u00E9 baterie",
+      "Rezim": 0,
+      "Specializace": 0,
+      "Spz": null,
+      "KategorieId": 8,
+      "Kategorie": null,
+      "MistnostId": 4,
+      "Mistnost": null,
+      "KontejnerId": null,
+      "Kontejner": null,
+      "Obsah": [],
+      "Leky": [],
+      "Vyrobce": "Hensgrohe",
+      "Model": null,
+      "SerioveCislo": null,
+      "Ean": null,
+      "Mnozstvi": null,
+      "Jednotka": null,
+      "DatumPorizeni": "2026-08-27",
+      "CenaKc": null,
+      "MaVlastniNfcKartu": true,
+      "SledovatPojisteni": false,
+      "SledovatExpiraci": false,
+      "SledovatServis": false,
+      "SledovatRevizi": false,
+      "Expirace": null,
+      "ZarukaMesice": 24,
+      "ZarukaDo": "2028-08-27",
+      "DalsiServisDo": null,
+      "Aktivni": true,
+      "Poznamka": null,
+      "VytvorenoUtc": "2026-08-27T20:31:54.2126788",
+      "UpravenoUtc": "2026-08-27T20:31:54.2126789",
+      "ServisniZaznamy": [],
+      "Pojisteni": []
+    }
+  ],
+  "ServisniZaznamy": [
+    {
+      "Id": 1,
+      "PolozkaId": 1,
+      "Polozka": null,
+      "Datum": "2026-08-27",
+      "Typ": 0,
+      "Popis": "Revize",
+      "CenaKc": null,
+      "Provozovna": null,
+      "DalsiTerminDo": "2027-08-27",
+      "VytvorenoUtc": "2026-08-27T20:16:53.5342777"
+    }
+  ],
+  "Pojisteni": [],
+  "Leky": []
+}
