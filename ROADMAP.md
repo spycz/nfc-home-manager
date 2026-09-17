@@ -232,7 +232,7 @@ Uživatel si připraví skutečná léčiva z domácnosti a postupně je zadáv�
 
 ### Import souboru SÚKL a původ informací
 
-Konkrétní soubor zatím nebyl dodán ani prozkoumán. Dostupnost EAN, účinných látek, indikací nebo odkazů na příbalové informace je nutné ověřit na jeho skutečném schématu; návrh jejich přítomnost negarantuje.
+Dne 17. 9. 2026 byl prohlédnut ukázkový XLSX export SÚKL se 12 záznamy řady PARALEN (seznam dle registračního čísla). Obsahuje název, sílu, lékovou formu, registrační číslo, cestu podání, léčivé látky, ATC skupinu, držitele registrace a stav registrace. Neobsahuje EAN, kód SÚKL konkrétního balení, velikost balení ani popis použití a odkazy na PIL. Zjištění platí pro tento vzorek, nikoli pro všechny datové sady SÚKL. Registrační číslo, kód SÚKL a EAN uchovávat odděleně. Pro tento export se po skenu EAN potvrdí shoda podle názvu, síly a formy a velikost balení se doplní z krabičky.
 
 - Správce nahraje soubor; aplikace zobrazí rozpoznaný formát, dostupná pole, datum zdroje a náhled několika řádků. Před importem ověřit strukturu, velikost a platnost záznamů.
 - Importovat do lokálního katalogu v SQLite. Při běžném skenu vyhledávat v katalogu, ne znovu procházet celý soubor.
@@ -243,6 +243,30 @@ Konkrétní soubor zatím nebyl dodán ani prozkoumán. Dostupnost EAN, účinn�
 - Nevytvářet indikaci pouhým odhadem z názvu, účinné látky nebo ATC skupiny. Pokud chybí podklad, zobrazit „Popis použití není doplněn“.
 - Aktualizace katalogu zobrazí relevantní změny k posouzení a zachová uživatelské poznámky, potvrzené vazby i historii balení. Opakovaný import stejného zdroje nesmí duplikovat katalog.
 - Import je pomůcka: nedostupný či neúplný soubor neblokuje založení skutečné krabičky ručně. Obvazy a další materiál se evidují samostatně, bez povinné shody v katalogu léčiv.
+
+### Příbalové informace PIL: příprava na počítači
+
+Dohodnutý postup: uživatel později stáhne archiv PIL na svůj počítač. Podle jeho údaje má archiv přibližně 3 GB; obsah ani struktura zatím nebyly prozkoumány. SÚKL uvádí PIL mezi dostupnými zdroji na [portálu otevřených dat](https://opendata.sukl.cz/).
+
+1. Na počítači prohlédnout strukturu archivu a případný index či vazební soubor (například CSV/XML, bude-li přítomen).
+2. Pro návrh importu poskytnout seznam souborů nebo snímek struktury, případný index a jeden ukázkový leták, ideálně Paralen. Celý archiv není potřeba nahrávat do konverzace.
+3. Ověřit skutečný identifikátor propojující dokument s přípravkem. Neodvozovat vazbu pouze z názvu; ověřit odpovídající sílu a formu i případný společný dokument pro více variant.
+4. Na počítači vytvořit výběr letáků k evidovaným přípravkům a přehled jejich ověřených vazeb. Hromadné zpracování oddělit od běžného skenování krabiček.
+5. Na hosting přenést pouze vybrané dokumenty a metadata. Celý přibližně 3GB archiv nepřidávat do aplikace, repozitáře ani hostované SQLite.
+6. Pokud se později ověří možnost stahování jednotlivých oficiálních dokumentů, lze ji využít pro doplnění nebo aktualizaci. Do té doby počítat s výběrem z lokálního archivu.
+
+| Součást | Uložení a účel |
+|---|---|
+| Katalog přípravků | SQLite; hledání názvu, síly, formy a účinných látek |
+| Vybrané PIL | Samostatné soubory na hostingu podle pravidel pro přílohy |
+| Metadata PIL | SQLite; identifikátor zdroje, vazby na přípravky, cesta k souboru, dostupná verze či datum dokumentu, datum importu a kontrolní otisk |
+| Stručně „Na co je“ | Schválené shrnutí z odpovídající příbalové informace s odkazem na dokument a jeho verzi |
+
+Stejný ověřený dokument sdílet mezi odpovídajícími variantami a fyzickými baleními; neukládat jej znovu pro každou krabičku. Verzi dokumentu a datum importu rozlišovat. Aktualizace má zachovat dohledatelný zdroj shrnutí a označit shrnutí ze staršího dokumentu k revizi.
+
+Detail přípravku nabídne stručný popis a tlačítko **Otevřít příbalový leták**, včetně dostupného data/verze. Chybějící nebo nejednoznačný PIL neblokuje evidenci balení; aplikace zobrazí, že leták dosud není přiřazen. Text „Na co je“ nevytvářet odhadem z ATC nebo účinné látky.
+
+**Další krok:** počkat na stažení archivu uživatelem a podle ukázky ověřit formát indexu, vazbu na katalog a způsob výběru jednotlivých dokumentů. Stažení ani import nejsou zatím provedené.
 
 ### Údaje a běžné ovládání
 
@@ -260,7 +284,7 @@ Výchozí, upravitelné nastavení: kontrola sady každých 6 měsíců, upozorn
 
 **Pilotní ověření:** známý EAN, neznámý EAN s ručním názvem, více variant stejného názvu, chybějící účinná látka či popis, opakovaný sken a dvě krabičky stejného přípravku s různou expirací. Opakovaný záběr kamery nezaloží další balení; další fyzická krabička vzniká vědomou akcí uživatele. Ověřit také neúspěšný import, zachování ručních dat po aktualizaci a přesun mezi domácí a výletní sadou.
 
-**Návaznost:** tento scénář upřesňuje průvodce lékárničkou v E2. První krok implementace je prohlédnout skutečný export SÚKL a vyzkoušet několik reálných krabiček; podle výsledku zvolit přímou vazbu EAN, nebo potvrzení shody podle názvu. Ruční evidence musí fungovat v obou případech.
+**Návaznost:** tento scénář upřesňuje průvodce lékárničkou v E2. Ukázkový export již byl prohlédnut; další krok je vyzkoušet několik reálných krabiček a po stažení archivu PIL ověřit jeho index a vazby. U dodaného exportu použít potvrzení shody podle názvu, síly a formy; přímá vazba EAN vyžaduje jiný ověřený zdroj. Ruční evidence musí fungovat v obou případech.
 
 ## Doporučené pořadí realizace
 
