@@ -105,7 +105,7 @@ Ověřit na konkrétním Androidu i iPhonu, v režimu letadlo, s přerušeným z
 **Slabiny:** náklady na první zadání, zastarávání dat, různá podpora telefonů a závislost online stránky na serveru. Současná směs inventáře, vozidel a zdravotních údajů může přerůst v dlouhé formuláře. Více zápisů na kartu také znamená více fyzické práce při aktualizacích.
 
 - Zahodit univerzální formulář se všemi poli; nahradit jej profily a průvodcem.
-- Import SÚKL skrýt mezi pokročilé nástroje, dokud nebude ověřen reálně použitelný zdroj s EAN. README už popisuje neúspěšnou zkušenost s exportem; import nemá být základ onboardingového toku.
+- Import souboru SÚKL připravit jako zdroj doplňujících údajů pro scénář sken EAN → název → potvrzení přípravku (kapitola 10). Správa importu zůstává v pokročilých nástrojích; běžný průvodce používá již importovaný katalog. Ověřit skutečná pole souboru; chybějící vazba EAN nesmí blokovat dohledání podle názvu ani ruční evidenci.
 - Sjednotit společný mechanismus lékárničky a první pomoci; zachovat odlišné šablony a pravidla soukromí.
 - Nestavět vlastní databázi lékových interakcí ani automatická doporučení dávkování. Ponechat uživatelské poznámky a jasný původ případně převzatých údajů.
 - Nezavádět mikroservisy, povinnou mobilní aplikaci ani AI pro jednoduché větvení formuláře.
@@ -177,6 +177,90 @@ Typ předvybere vhodná pole a úkony. Například kolo nevyžaduje SPZ ani STK.
 Všechny scénáře mění data až po přihlášení a potvrzení; samotné načtení NFC odkazu nic neodečítá ani nepotvrzuje provedení údržby. Potvrzení jedné operace se při opakovaném odeslání neuplatní dvakrát. Běžné akce aktualizují databázi bez nutnosti přepisovat NFC kartu.
 
 **Návaznost na etapy:** E1 připraví společná data, termíny a validace vztahů. E2 zavede pět sekcí a postupně základní scénáře; piloty zůstanou omezené na vybrané věci. Přílohy, kalendářový export, minimální zásoby, nákupní seznam a zapůjčení zůstávají rozšířeními E4, pokud je skutečné používání neposune do vyšší priority. E3 doplní offline souhrn pouze na zvolené pilotní karty.
+
+## 10. Pilot: rodinná lékárnička a první pomoc
+
+Návrh doplněný 17. 9. 2026, zatím bez implementace. Obecná šablona domácí a výletní sady. Konkrétní léčiva se zadávají až podle skutečných krabiček; neodhadovat název, sílu, formu ani dávkování. Osobní zdravotní údaje nejsou součástí této dokumentace.
+
+### Uspořádání a výchozí obsah
+
+- **První pomoc – doma:** jedna sada s přihrádkami Rány, Obvazy a Pomůcky.
+- **První pomoc – výlety a sport:** menší samostatná sada s vlastními zásobami a NFC kartou.
+- **Běžné léky:** společný katalog přípravků a skutečných balení; přípravek může být fyzicky v sadě první pomoci a dostupný z obou přehledů, ale zásoba se započítává pouze jednou.
+- NFC otevírá sadu; čárový kód na výrobku pomáhá identifikovat produkt. Každá krabička nepotřebuje vlastní NFC.
+
+Navržená počáteční zásoba pro domácí sadu (uživatelsky upravitelná šablona, nikoli povinný standard):
+
+| Skupina | Položka | Cílová zásoba |
+|---|---|---|
+| Rány | Náplasti s polštářkem různých velikostí | 30 ks |
+| Rány | Sterilní čtverce ve dvou velikostech | 10 jednotlivě sterilně balených jednotek |
+| Rány | Nepřilnavé sterilní krytí | 4 ks |
+| Rány | Náplast v roli | 1 role |
+| Rány | Přípravek určený na dezinfekci drobných ran, vybraný podle označení výrobku | 1 malé balení |
+| Obvazy | Hotový sterilní obvaz s polštářkem | 2 střední + 2 velké |
+| Obvazy | Fixační obinadlo | 3 ks |
+| Obvazy | Elastické obinadlo ve dvou šířkách | 2 ks |
+| Obvazy | Trojcípý šátek | 2 ks |
+| Pomůcky | Nitrilové rukavice ve vhodných velikostech | 4 páry |
+| Pomůcky | Nůžky s tupou špičkou | 1 ks |
+| Pomůcky | Pinzeta a pomůcka na odstranění klíštěte | Po 1 ks |
+| Pomůcky | Izotermická fólie | 2 ks |
+| Pomůcky | Jednorázový chladicí sáček | 2 ks |
+| Pomůcky | Resuscitační rouška s ventilem | 1 ks |
+| Pomůcky | Tištěný stručný návod první pomoci | 1 ks |
+| Volitelné přípravky | Pouze skutečně evidované přípravky; název, sílu a formu převzít z krabičky | Podle skutečné zásoby |
+
+Výletní sada: 10 náplastí, 4 balené jednotky sterilních čtverců, 2 hotové obvazy, 1 fixační obinadlo, 2 páry rukavic, 1 fólie, malé nůžky, pomůcka na klíště a náplasti na puchýře. Přesun zásob mezi sadami se zaznamenává jako přesun, nikoli jako nové pořízení.
+
+Podklad pro druhy základního vybavení: [St John Ambulance – obsah lékárničky](https://shop.sja.org.uk/pages/what-to-put-in-a-first-aid-kit). Počty a rozdělení jsou návrhem pro tento projekt. Aplikace neposuzuje vhodnost léčiva pro konkrétního člena rodiny a neodvozuje dávkování z přibližného věku.
+
+### Hlavní scénář: skutečné krabičky → EAN → název → údaje SÚKL
+
+Uživatel si připraví skutečná léčiva z domácnosti a postupně je zadává. Nejdříve evidujeme, co skutečně vlastní; katalog slouží k doplnění údajů.
+
+1. Otevřít lékárničku a zvolit **Přidat léčivo / Skenovat další krabičku**.
+2. Kamerou naskenovat EAN na krabičce; vždy umožnit ruční zadání kódu. Načtený kód ukázat pro kontrolu.
+3. Zapsat **název přípravku podle krabičky**. U již známého kódu nabídnout uložený název k potvrzení. Pro rozlišení variant doplnit sílu, lékovou formu a velikost balení.
+4. Vyhledat nejprve v již potvrzených vlastních vazbách a poté v katalogu vytvořeném z **importovaného souboru databáze SÚKL**. Přímé vyhledání přes EAN použít jen tehdy, pokud konkrétní export nebo ověřený převodník tuto vazbu obsahuje. Jinak hledat podle názvu a upřesňujících údajů.
+5. Zobrazit návrh shody: název, sílu, formu, velikost balení a kód SÚKL, jsou-li ve zdroji dostupné. Při více výsledcích vyžadovat výběr; samotný podobný název nestačí k automatickému přiřazení.
+6. Po potvrzení převzít dostupné údaje, zejména **účinnou látku či látky**, a nabídnout **stručně, na co přípravek je**, pouze s dohledatelným podkladem. Chybějící pole ponechat prázdné.
+7. Doplnit údaje konkrétní fyzické krabičky: expiraci, počáteční či zbývající množství, jednotku, umístění a volitelně šarži. U otevřených přípravků také datum otevření a dobu použitelnosti podle příslušných pokynů.
+8. Zobrazit souhrn → **Uložit a skenovat další**. Po uložení zachovat vybranou sadu, nikoli expiraci nebo množství předchozího balení.
+
+**Příklad bez domýšlení léčiva:** uživatel načte kód skutečné krabičky, napíše název z obalu a vybere přesnou variantu z importu. Účinná látka se doplní ze zdroje až po potvrzení shody. Nová krabička stejného přípravku používá stejnou katalogovou variantu, ale má vlastní expiraci a zůstatek.
+
+### Import souboru SÚKL a původ informací
+
+Konkrétní soubor zatím nebyl dodán ani prozkoumán. Dostupnost EAN, účinných látek, indikací nebo odkazů na příbalové informace je nutné ověřit na jeho skutečném schématu; návrh jejich přítomnost negarantuje.
+
+- Správce nahraje soubor; aplikace zobrazí rozpoznaný formát, dostupná pole, datum zdroje a náhled několika řádků. Před importem ověřit strukturu, velikost a platnost záznamů.
+- Importovat do lokálního katalogu v SQLite. Při běžném skenu vyhledávat v katalogu, ne znovu procházet celý soubor.
+- Uchovat název a verzi zdroje, datum importu a identifikátor záznamu. Kód SÚKL a EAN/GTIN vést jako rozdílné identifikátory a ukládat jako text, včetně případných úvodních nul.
+- **EAN identifikuje produktovou variantu, nikoli jedinečnou fyzickou krabičku.** Expiraci konkrétního balení nepřebírat z produktového katalogu. Pokud skener zachytí jiný druh kódu, například 2D DataMatrix, rozlišit jej a nepovažovat celý řetězec za EAN; jeho zpracování řešit samostatně.
+- Uživatelem potvrzené přiřazení EAN ke katalogové variantě uložit pro příští skeny. Konflikt nové shody se starou ukázat k vyřešení; nepřepisovat jej automaticky.
+- Stručné pole **„Na co je“** převzít z vhodného pole zdroje, pokud skutečně existuje a obsah odpovídá konkrétnímu přípravku. Jinak umožnit ručně schválené shrnutí podle jeho příbalové informace s odkazem a datem; uživatelskou poznámku označit odděleně.
+- Nevytvářet indikaci pouhým odhadem z názvu, účinné látky nebo ATC skupiny. Pokud chybí podklad, zobrazit „Popis použití není doplněn“.
+- Aktualizace katalogu zobrazí relevantní změny k posouzení a zachová uživatelské poznámky, potvrzené vazby i historii balení. Opakovaný import stejného zdroje nesmí duplikovat katalog.
+- Import je pomůcka: nedostupný či neúplný soubor neblokuje založení skutečné krabičky ručně. Obvazy a další materiál se evidují samostatně, bez povinné shody v katalogu léčiv.
+
+### Údaje a běžné ovládání
+
+| Evidence | Údaje |
+|---|---|
+| Katalogová varianta léčiva | Název, síla, forma, velikost balení, kód SÚKL, potvrzené EAN/GTIN vazby, účinné látky, zdrojovaný popis použití |
+| Fyzické balení | Vlastní interní ID, vazba na variantu, expirace, množství a jednotka, umístění, případně šarže a datum otevření |
+| Zdravotnický materiál a pomůcky | Název, případný produktový kód, množství a jednotka, umístění; expirace a stav obalu tam, kde se uplatňují |
+| Sada první pomoci | Název, umístění, NFC karta, cílový obsah, skutečné zásoby, poslední a další kontrola |
+| Pohyb zásob | Spotřeba, doplnění, přesun či oprava; datum, množství, dotčené balení a poznámka |
+
+Po přiložení NFC zobrazit chybějící položky, blížící se expirace a poslední kontrolu. Hlavní akce: **Použil jsem vybavení**, **Doplnit**, **Zkontrolovat sadu**. Spotřebu více položek potvrdit najednou; opakované odeslání nesmí odečíst zásobu podruhé.
+
+Výchozí, upravitelné nastavení: kontrola sady každých 6 měsíců, upozornění 60 dní před expirací. U sterilního materiálu kontrolovat i neporušenost obalu. Kontrola nezmění neúplnou sadu automaticky na kompletní. Připomínky respektují vyřazení balení a vypnuté sledování.
+
+**Pilotní ověření:** známý EAN, neznámý EAN s ručním názvem, více variant stejného názvu, chybějící účinná látka či popis, opakovaný sken a dvě krabičky stejného přípravku s různou expirací. Opakovaný záběr kamery nezaloží další balení; další fyzická krabička vzniká vědomou akcí uživatele. Ověřit také neúspěšný import, zachování ručních dat po aktualizaci a přesun mezi domácí a výletní sadou.
+
+**Návaznost:** tento scénář upřesňuje průvodce lékárničkou v E2. První krok implementace je prohlédnout skutečný export SÚKL a vyzkoušet několik reálných krabiček; podle výsledku zvolit přímou vazbu EAN, nebo potvrzení shody podle názvu. Ruční evidence musí fungovat v obou případech.
 
 ## Doporučené pořadí realizace
 
