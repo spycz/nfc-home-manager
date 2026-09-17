@@ -10,7 +10,7 @@ Návrh k 16. 9. 2026 podle současného kódu. Jde o plán, nikoli seznam hotov�
 - Rozdělit společné pole „další servis / STK“ na samostatné termíny: servis, STK, revize, výměna filtru. Jeden záznam dnes může přepsat termín jiného typu.
 - Připomínky musí respektovat zapnuté sledování, vyřešené události a archivaci. Dnes se v `ReminderService` vyhodnocují data bez ohledu na příznaky sledování.
 - Doplnit úpravu existujícího léku, servisu a pojištění; nestačí přidání a smazání. U léků rozlišit přípravek a jednotlivá balení s vlastní expirací.
-- Validovat vztahy a pravidla na serveru: nepovolit cyklus krabic, lék pod autem, neplatné enumy ani libovolnou změnu množství mimo povolené meze.
+- Validovat vztahy a pravidla na serveru: nepovolit cyklus krabic, nepovolené přímé vložení balení do vozidla (sadu první pomoci lze k vozidlu přiřadit), neplatné enumy ani libovolnou změnu množství mimo povolené meze.
 - Zobrazit jasný stav neznámého, archivovaného či zrušeného štítku. Neznámý kód vracet jako HTTP 404.
 
 ## 2. Zabezpečení
@@ -124,6 +124,59 @@ Ověřit na konkrétním Androidu i iPhonu, v režimu letadlo, s přerušeným z
 | Evidence karet, přiřazení a ověření zápisu | Hromadné programování a tisk štítků |
 | Náhradní QR a srozumitelné chyby skenu | Zapůjčení věcí a inventura místnosti |
 | Pilot programovatelné karty s konkrétním užitkem | Offline PWA, nativní utilita a domácí automatizace |
+
+## 9. Členění domácnosti do pěti sekcí
+
+Doplněno 17. 9. 2026. Jde o návrh cílového uspořádání aplikace, nikoli o již implementované funkce.
+
+Pět hlavních sekcí má vlastní přehledy, pole a hlavní akce. Společně používají evidenci věcí, umístění, NFC karet, příloh, termínů a historie.
+
+| Sekce | Podsekce a příklady | Sledované údaje | Hlavní akce po přiložení |
+|---|---|---|---|
+| Lékárnička | Běžné léky; první pomoc | Přípravky, jednotlivá balení, množství, expirace; u první pomoci také úplnost sady | Zapsat spotřebu, doplnit, zkontrolovat výbavu |
+| Vozidla | Auto, motorka, přívěs, kolo; případně zahradní traktůrek | Km nebo motohodiny, servis, STK, pojištění, pneumatiky a dokumenty podle typu | Zapsat servis, stav km nebo závadu |
+| Technická zařízení budovy | Vytápění, voda, elektroinstalace, větrání, zabezpečení | Samostatné servisy, revize, kontroly, filtry, kontakty a dokumentace | Zapsat údržbu, kontrolu nebo závadu |
+| Domácí spotřebiče | Kuchyň, praní a úklid, ostatní spotřebiče | Model, výrobní číslo, pořízení, záruka, návody, čištění a spotřební díly | Zapsat čištění, výměnu filtru nebo opravu |
+| Dílna | Nářadí a stroje; materiál a spotřební zásoby | Stav, servis, zapůjčení; množství, jednotky a volitelná minimální zásoba | Odebrat, doplnit, zapůjčit nebo zapsat údržbu |
+
+### Lékárnička: běžné léky a první pomoc
+
+- **Běžné léky:** přehled přípravků; pod každým přípravkem konkrétní balení s vlastní expirací, množstvím a umístěním. Uživatel volí evidenci celých balení nebo obsahu s jednoznačnou jednotkou.
+- **První pomoc:** jednotlivé sady (domácí, do auta, na výlet) s požadovaným a skutečným obsahem. Kontrola ukazuje chybějící vybavení a expirace tam, kde se sledují.
+- Sdílený katalog umožní zařadit stejný přípravek i do první pomoci. Konkrétní fyzické balení má jedno umístění a nezapočítává se dvakrát.
+- Kontrolní seznam první pomoci slouží k evidenci uživatelem zvolené výbavy; sám nepotvrzuje zdravotní nebo právní vhodnost sady.
+
+### Sekce, umístění a kontejnery
+
+- Sekce určuje účel a nabídku funkcí; umístění říká, kde věc je; kontejner určuje, v čem je uložená.
+- Vrtačka: sekce Dílna → umístění Garáž → kufr č. 2. Přesun kufru zachová vazbu jeho obsahu.
+- Autolékárnička: sekce Lékárnička / První pomoc → sada přiřazená ke konkrétnímu vozidlu. Detail vozidla nabídne odkaz na sadu a její stav, bez duplikace zásob.
+- Krabice, kufr a sada mohou mít vlastní NFC kartu a existovat v kterékoli sekci. Přiřazení sady k vozidlu je odlišný vztah od vložení balení do sady.
+- Zařízení obsluhující budovu patří do technických zařízení (kotel, rekuperace); zařízení pro konkrétní domácí činnost mezi spotřebiče (pračka, kávovar). Zařazení lze změnit se zachováním historie.
+- NFC karta je samostatná evidence přiřazená k věci nebo kontejneru; výměna karty nevytváří novou věc.
+- Server ověřuje povolené vztahy a zabraňuje cyklům. Nezakazovat legitimní vazbu sady první pomoci na vozidlo.
+
+### Průvodce a společný přehled
+
+První krok průvodce z kapitoly 4 nabídne sekci a poté typ v rámci stejného kroku. Následují základní údaje, sledování, obsah a přístup, připojení karty. Zachovat nejvýše pět krátkých kroků. Krabice je dostupná napříč sekcemi; samostatná akční karta se zakládá k existujícímu cíli.
+
+Typ předvybere vhodná pole a úkony. Například kolo nevyžaduje SPZ ani STK. Úvodní přehled napříč sekcemi zobrazí blížící se a prošlé termíny, chybějící zásoby a otevřené závady; nabídne filtr podle sekce a umístění.
+
+### Návrhy praktických scénářů
+
+| Oblast | Umístění NFC | Průběh | Výsledek |
+|---|---|---|---|
+| Běžné léky – doplnění a spotřeba | Skříňka nebo zásobník | Otevřít přehled → vybrat přípravek a konkrétní balení → zadat spotřebu a potvrdit. Při nákupu přidat nové balení s vlastní expirací. | Správný zůstatek a přehled expirací; později seznam k doplnění podle nastaveného minima. |
+| První pomoc – kontrola před výletem | Pouzdro sady | Otevřít kontrolní seznam → porovnat skutečný obsah → opravit množství → potvrdit kontrolu. | Seznam chybějících či expirujících položek a datum poslední kontroly; neúplná sada zůstává označená. |
+| Vozidla – výměna oleje | Servisní složka nebo vhodné místo ve vozidle | Otevřít vozidlo → Zapsat servis → datum, km, provedené práce a případně cena → nastavit další termín nebo kilometrovou hranici. | Historie servisu a další plán bez přepsání STK či pojištění. Kilometrové upozornění vychází z naposledy ručně zadaného stavu. |
+| Technická zařízení budovy – servis kotle | Štítek u kotle | Zobrazit poslední servis a kontakt → po provedení zapsat servis → potvrdit další plánovaný termín; později přiložit protokol a nabídnout export do kalendáře. | Dohledatelná historie a samostatné termíny servisu a revize; interval nastavuje uživatel podle podkladů zařízení. |
+| Domácí spotřebiče – údržba kávovaru | Štítek u kávovaru | Otevřít detail s návodem a poslední údržbou → vybrat čištění, odvápnění nebo výměnu filtru → potvrdit provedení. | Oddělená historie a další termín pro každý úkon podle nastavení uživatele; později odkaz na správný spotřební díl. |
+| Dílna – spotřební zásoby | Krabička se šrouby nebo zásobník materiálu | Otevřít položku → Odebrat / Doplnit → zadat množství v nastavené jednotce → potvrdit. | Dohledatelný pohyb a zůstatek; později upozornění na minimum a seznam k nákupu. |
+| Dílna – zapůjčení nářadí | Kufr s nářadím | Otevřít nářadí → Zapůjčit → komu a očekávané vrácení → při návratu potvrdit převzetí a stav. | Přehled zapůjčených věcí a historie vrácení; rozšíření pro E4. |
+
+Všechny scénáře mění data až po přihlášení a potvrzení; samotné načtení NFC odkazu nic neodečítá ani nepotvrzuje provedení údržby. Potvrzení jedné operace se při opakovaném odeslání neuplatní dvakrát. Běžné akce aktualizují databázi bez nutnosti přepisovat NFC kartu.
+
+**Návaznost na etapy:** E1 připraví společná data, termíny a validace vztahů. E2 zavede pět sekcí a postupně základní scénáře; piloty zůstanou omezené na vybrané věci. Přílohy, kalendářový export, minimální zásoby, nákupní seznam a zapůjčení zůstávají rozšířeními E4, pokud je skutečné používání neposune do vyšší priority. E3 doplní offline souhrn pouze na zvolené pilotní karty.
 
 ## Doporučené pořadí realizace
 
