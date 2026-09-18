@@ -192,10 +192,12 @@ else
     </div>
 }
 
-@if (Model.Polozka.Rezim == NfcRezim.Lekarnicka)
+@if (Model.Polozka.Rezim is NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc)
 {
     <div class="card">
         <h2>Léky a prostředky</h2>
+        <a class="btn" href="/Leky/Pridat?sadaId=@Model.Polozka.Id">Přidat lék – průvodce</a>
+        <p class="muted">Každý řádek je samostatné balení. Starší záznamy bez přípravku lze doplnit přes Upravit.</p>
 
         @if (Model.Polozka.Leky.Count == 0)
         {
@@ -222,11 +224,11 @@ else
                     {
                         var prosle = l.Expirace.HasValue && l.Expirace.Value < DateOnly.FromDateTime(DateTime.Today);
                         <tr>
-                            <td>@l.Nazev</td>
+                            <td>@l.Nazev<br /><small>Balení #@l.Id @(l.PripravekId.HasValue ? "" : "· původní evidence")</small></td>
                             <td>@(l.JeLek ? "lék" : "prostředek")</td>
                             <td>@(l.NaCoJe ?? "—")</td>
                             <td>@(l.ProKoho ?? "—")</td>
-                            <td>@(l.NaPredpis ? "ano" : "ne")</td>
+                            <td>@(l.PripravekId.HasValue ? "nezjištěno" : (l.NaPredpis ? "ano" : "ne"))</td>
                             <td>@(l.Davkovani ?? "—")</td>
                             <td>
                                 @if (l.Mnozstvi.HasValue)
@@ -236,12 +238,14 @@ else
                                         <form method="post" asp-page-handler="UpravitMnozstviLeku">
                                             <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                             <input type="hidden" name="lekId" value="@l.Id" />
+                                            <input type="hidden" name="verze" value="@l.Verze" />
                                             <input type="hidden" name="delta" value="-1" />
                                             <button class="btn btn--secondary" type="submit">−1</button>
                                         </form>
                                         <form method="post" asp-page-handler="UpravitMnozstviLeku">
                                             <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                             <input type="hidden" name="lekId" value="@l.Id" />
+                                            <input type="hidden" name="verze" value="@l.Verze" />
                                             <input type="hidden" name="delta" value="1" />
                                             <button class="btn btn--secondary" type="submit">+1</button>
                                         </form>
@@ -263,9 +267,14 @@ else
                                 }
                             </td>
                             <td>
+                                @if (l.JeLek)
+                                {
+                                    <a class="btn btn--secondary" href="/Leky/Pridat?lekId=@l.Id">Upravit</a>
+                                }
                                 <form method="post" asp-page-handler="SmazatLek" data-confirm="Smazat záznam?">
                                     <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                     <input type="hidden" name="lekId" value="@l.Id" />
+                                            <input type="hidden" name="verze" value="@l.Verze" />
                                     <button class="btn btn--secondary" type="submit">Smazat</button>
                                 </form>
                             </td>
@@ -290,69 +299,17 @@ else
             </table>
         }
 
-        <h3>Přidat lék / prostředek</h3>
+        <h3>Přidat prostředek (náplast, obvaz…)</h3>
         <form method="post" asp-page-handler="PridatLek">
             <input type="hidden" name="id" value="@Model.Polozka.Id" />
+            <input type="hidden" name="NovyLek.JeLek" value="false" />
             <div class="form-grid">
-                <div class="field">
-                    <label for="NovyLek_Nazev">Název přípravku *</label>
-                    <input id="NovyLek_Nazev" type="text" asp-for="NovyLek.Nazev" />
-                    <span asp-validation-for="NovyLek.Nazev" class="muted" style="color:var(--danger);"></span>
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Ean">Čárový kód (EAN)</label>
-                    <div class="barcode-row">
-                        <input id="NovyLek_Ean" type="text" inputmode="numeric" asp-for="NovyLek.Ean" />
-                        <button type="button" class="btn btn--secondary"
-                                data-barcode-scan
-                                data-ean-target="NovyLek_Ean"
-                                data-name-target="NovyLek_Nazev">Skenovat</button>
-                    </div>
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" asp-for="NovyLek.JeLek" /> je to lék (ne jen prostředek, např. náplast)</label>
-                </div>
-                <div class="field">
-                    <label for="NovyLek_NaCoJe">Na co je</label>
-                    <input id="NovyLek_NaCoJe" type="text" asp-for="NovyLek.NaCoJe" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_ProKoho">Pro koho (v rodině)</label>
-                    <input id="NovyLek_ProKoho" type="text" asp-for="NovyLek.ProKoho" />
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" asp-for="NovyLek.NaPredpis" /> na předpis</label>
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Davkovani">Dávkování</label>
-                    <input id="NovyLek_Davkovani" type="text" asp-for="NovyLek.Davkovani" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Mnozstvi">Množství</label>
-                    <input id="NovyLek_Mnozstvi" type="number" step="0.01" min="0" asp-for="NovyLek.Mnozstvi" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Jednotka">Jednotka</label>
-                    <input id="NovyLek_Jednotka" type="text" asp-for="NovyLek.Jednotka" placeholder="ks, balení…" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Expirace">Expirace</label>
-                    <input id="NovyLek_Expirace" type="date" asp-for="NovyLek.Expirace" />
-                </div>
+                <div class="field"><label asp-for="NovyLek.Nazev">Název *</label><input asp-for="NovyLek.Nazev" /><span asp-validation-for="NovyLek.Nazev"></span></div>
+                <div class="field"><label asp-for="NovyLek.Mnozstvi">Množství</label><input asp-for="NovyLek.Mnozstvi" type="number" min="0" step="0.001" /></div>
+                <div class="field"><label asp-for="NovyLek.Jednotka">Jednotka</label><input asp-for="NovyLek.Jednotka" /></div>
+                <div class="field"><label asp-for="NovyLek.Expirace">Expirace (pokud se sleduje)</label><input asp-for="NovyLek.Expirace" type="date" /></div>
             </div>
-            <div class="field">
-                <label for="NovyLek_NezadouciUcinky">Nežádoucí účinky</label>
-                <textarea id="NovyLek_NezadouciUcinky" asp-for="NovyLek.NezadouciUcinky"></textarea>
-            </div>
-            <div class="field">
-                <label for="NovyLek_Interakce">S čím se nesmí kombinovat (jiný lék, alkohol…)</label>
-                <textarea id="NovyLek_Interakce" asp-for="NovyLek.Interakce"></textarea>
-            </div>
-            <div class="field">
-                <label for="NovyLek_Poznamka">Poznámka</label>
-                <textarea id="NovyLek_Poznamka" asp-for="NovyLek.Poznamka"></textarea>
-            </div>
-            <button class="btn" type="submit">Přidat</button>
+            <button class="btn" type="submit">Přidat prostředek</button>
         </form>
     </div>
 }
@@ -530,3 +487,4 @@ else
     <script src="/js/vendor/zxing-browser.min.js" defer></script>
     <script src="/js/barcode.js" defer></script>
 }
+

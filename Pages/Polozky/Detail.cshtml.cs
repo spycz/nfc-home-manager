@@ -173,6 +173,11 @@ public class DetailModel(AppDbContext db) : PageModel
             return NotFound();
         }
 
+        if (!Polozka.Aktivni || Polozka.Rezim is not (NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc))
+            return BadRequest("Vyber aktivní lékárničku nebo první pomoc.");
+        if (NovyLek.JeLek)
+            return RedirectToPage("/Leky/Pridat", new { sadaId = id });
+
         ModelState.Clear();
         if (!TryValidateModel(NovyLek, nameof(NovyLek)))
         {
@@ -201,15 +206,16 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
-    public async Task<IActionResult> OnPostSmazatLekAsync(int id, int lekId, CancellationToken ct)
+    public async Task<IActionResult> OnPostSmazatLekAsync(int id, int lekId, int verze, CancellationToken ct)
     {
         var lek = await db.Leky.FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
         if (lek is not null)
         {
+            if (lek.Verze != verze) return new ConflictObjectResult("Balení se změnilo. Obnov stránku.");
             db.Leky.Remove(lek);
-            await db.SaveChangesAsync(ct);
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateConcurrencyException) { return new ConflictObjectResult("Balení se změnilo. Obnov stránku."); }
         }
-
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
@@ -227,15 +233,24 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
-    public async Task<IActionResult> OnPostUpravitMnozstviLekuAsync(int id, int lekId, decimal delta, CancellationToken ct)
+    public async Task<IActionResult> OnPostUpravitMnozstviLekuAsync(int id, int lekId, decimal delta, int verze, CancellationToken ct)
     {
-        var lek = await db.Leky.FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
-        if (lek is not null)
-        {
-            lek.Mnozstvi = Math.Max(0, (lek.Mnozstvi ?? 0) + delta);
-            await db.SaveChangesAsync(ct);
-        }
-
+        if (delta != -1 && delta != 1) return BadRequest("Rychlá změna podporuje pouze −1 nebo +1.");
+        var lek = await db.Leky.Include(l => l.Pripravek).Include(l => l.Lekarnicka)
+            .FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
+        if (lek is null) return NotFound();
+        if (lek.Lekarnicka is not { Aktivni: true, Rezim: NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc })
+            return BadRequest("Sada není aktivní.");
+        if (lek.Verze != verze) return new ConflictObjectResult("Množství se mezitím změnilo. Obnov stránku.");
+        if (!lek.Mnozstvi.HasValue) return BadRequest("Nejdříve zadej známé množství přes Upravit.");
+        var nove = lek.Mnozstvi.Value + delta;
+        if (nove < 0 || nove > 1_000_000 || (lek.Pripravek?.ObsahBaleni is decimal obsah && nove > obsah))
+            return BadRequest("Množství je mimo rozsah jedné krabičky. Další krabičku přidej průvodcem.");
+        lek.Mnozstvi = nove;
+        lek.Verze++;
+        lek.UpravenoUtc = DateTime.UtcNow;
+        try { await db.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException) { return new ConflictObjectResult("Množství se mezitím změnilo. Obnov stránku."); }
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
@@ -244,6 +259,8 @@ public class DetailModel(AppDbContext db) : PageModel
         var polozka = await db.Polozky.FindAsync([id], ct);
         if (polozka is not null)
         {
+            if (await db.Leky.AnyAsync(l => l.LekarnickaId == id, ct))
+                return BadRequest("Sada obsahuje léky nebo prostředky. Přesuň obsah, nebo sadu archivuj.");
             db.Polozky.Remove(polozka);
             await db.SaveChangesAsync(ct);
         }
@@ -390,3 +407,4 @@ public class NovyLekInput
     [StringLength(500)]
     public string? Poznamka { get; set; }
 }
+

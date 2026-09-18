@@ -7,6 +7,7 @@ public static class DbInitializer
     public static void Initialize(AppDbContext context)
     {
         context.Database.EnsureCreated();
+        LekSchemaUpgrade.Apply(context);
 
         if (!context.Mistnosti.Any())
         {

@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ServisniZaznam> ServisniZaznamy => Set<ServisniZaznam>();
     public DbSet<Pojisteni> Pojisteni => Set<Pojisteni>();
     public DbSet<Lek> Leky => Set<Lek>();
+    public DbSet<LekPripravek> LekPripravky => Set<LekPripravek>();
     public DbSet<LekovyKatalog> LekovyKatalog => Set<LekovyKatalog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -44,12 +45,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Lek>(entity =>
         {
+            entity.Property(l => l.Verze).IsConcurrencyToken();
+            entity.HasIndex(l => l.OperaceId).IsUnique();
+            entity.HasOne(l => l.Pripravek).WithMany()
+                .HasForeignKey(l => l.PripravekId).OnDelete(DeleteBehavior.Restrict);
             entity.Property(l => l.Mnozstvi).HasColumnType("decimal(18,3)");
 
             entity.HasOne(l => l.Lekarnicka)
                 .WithMany(p => p.Leky)
                 .HasForeignKey(l => l.LekarnickaId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LekPripravek>(entity =>
+        {
+            entity.ToTable("LekPripravky");
+            entity.Ignore(p => p.Popisek);
+            entity.HasIndex(p => p.Klic).IsUnique();
+            entity.HasIndex(p => p.Ean).IsUnique();
+            entity.Property(p => p.ObsahBaleni).HasColumnType("decimal(18,3)");
         });
 
         modelBuilder.Entity<ServisniZaznam>(entity =>

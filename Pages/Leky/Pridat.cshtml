@@ -1,0 +1,113 @@
+@page
+@model NfcHomeManager.Pages.Leky.PridatModel
+@{
+    ViewData["Title"] = Model.Uprava ? "Upravit krabičku" : "Přidat lék";
+}
+<h1>@ViewData["Title"]</h1>
+<p>Jedna krabička má vlastní množství a expiraci. Údaje o přípravku může sdílet s dalšími krabičkami.</p>
+@if (Model.Sady.Count == 0)
+{
+    <p class="alert alert--error">Nejdříve založ aktivní lékárničku nebo sadu první pomoci.</p>
+    <a class="btn" href="/Polozky/Novy">Založit sadu</a>
+}
+else
+{
+<form method="post" id="lek-wizard" class="card">
+    <div asp-validation-summary="All" class="alert--error" role="alert"></div>
+    <input type="hidden" asp-for="Input.LekId" />
+    <input type="hidden" asp-for="Input.Verze" />
+    <input type="hidden" asp-for="Input.OperaceId" />
+    <p id="wizard-progress" aria-live="polite"></p>
+
+    <fieldset data-wizard-step>
+        <legend>1. Krabička a vlastní evidence</legend>
+        <div class="field">
+            <label asp-for="Input.Ean">EAN / GTIN z obalu (volitelný)</label>
+            <div class="barcode-row">
+                <input asp-for="Input.Ean" inputmode="numeric" autocomplete="off" />
+                <button type="button" class="btn btn--secondary" data-barcode-scan data-ean-target="Input_Ean" data-skip-lookup>Skenovat</button>
+            </div>
+            <span asp-validation-for="Input.Ean"></span>
+        </div>
+        <p class="muted">Nemáš kód? Pokračuj bez něj a zadej název. Vyhledáváme pouze ve vlastní evidenci.</p>
+        <p id="code-result" role="status"></p>
+        <div class="field">
+            <label asp-for="Input.PripravekId">Už uložený přípravek</label>
+            <select asp-for="Input.PripravekId">
+                <option value="">Nový přípravek – zadat ručně</option>
+                @foreach (var p in Model.Pripravky)
+                {
+                    <option value="@p.Id" data-ean="@p.Ean" data-name="@p.Nazev" data-strength="@p.Sila"
+                            data-form="@p.Forma" data-size="@(p.ObsahBaleni?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                            data-unit="@p.Jednotka">@p.Popisek</option>
+                }
+            </select>
+            <span asp-validation-for="Input.PripravekId"></span>
+        </div>
+    </fieldset>
+
+    <fieldset data-wizard-step>
+        <legend>2. Ověř přípravek podle obalu</legend>
+        <p class="muted">U existujícího přípravku potvrď správnou variantu. Pro jinou sílu nebo formu se vrať a zvol nový přípravek.</p>
+        <div class="form-grid">
+            <div class="field"><label asp-for="Input.Nazev">Název *</label><input asp-for="Input.Nazev" data-product-field /><span asp-validation-for="Input.Nazev"></span></div>
+            <div class="field"><label asp-for="Input.Sila">Síla, například 500 mg</label><input asp-for="Input.Sila" data-product-field /></div>
+            <div class="field"><label asp-for="Input.Forma">Forma, například tableta</label><input asp-for="Input.Forma" data-product-field /></div>
+            <div class="field"><label asp-for="Input.ObsahBaleni">Obsah plné krabičky (volitelný)</label><input asp-for="Input.ObsahBaleni" type="number" min="0.001" max="1000000" step="0.001" data-product-field /><span asp-validation-for="Input.ObsahBaleni"></span></div>
+            <div class="field"><label asp-for="Input.Jednotka">Jednotka zásoby *</label>
+                <select asp-for="Input.Jednotka" data-product-field>
+                    @foreach (var unit in NfcHomeManager.Pages.Leky.PridatModel.Units) { <option value="@unit">@unit</option> }
+                </select>
+            </div>
+        </div>
+        <p class="muted">Zvol jednotku, v níž budeš odečítat zásobu. Neznámou sílu, formu nebo obsah můžeš doplnit později výběrem správného přípravku.</p>
+    </fieldset>
+
+    <fieldset data-wizard-step>
+        <legend>3. Tvoje fyzická krabička</legend>
+        <div class="form-grid">
+            <div class="field"><label asp-for="Input.Mnozstvi">Kolik zbývá</label><input asp-for="Input.Mnozstvi" type="number" step="0.001" min="0" max="1000000" /><span asp-validation-for="Input.Mnozstvi"></span>
+                <label><input asp-for="Input.MnozstviNezname" /> Množství zatím nevím</label></div>
+            <div class="field"><label asp-for="Input.Expirace">Expirace</label><input asp-for="Input.Expirace" type="date" /><span asp-validation-for="Input.Expirace"></span>
+                <label><input asp-for="Input.ExpiraceNeznama" /> Expiraci doplním později</label></div>
+            <div class="field"><label asp-for="Input.Sarze">Šarže (volitelná)</label><input asp-for="Input.Sarze" /></div>
+            <div class="field"><label asp-for="Input.DatumOtevreni">Datum otevření (volitelné)</label><input asp-for="Input.DatumOtevreni" type="date" /><span asp-validation-for="Input.DatumOtevreni"></span></div>
+        </div>
+        <p class="muted">Datum otevření zatím samo nepočítá dobu použitelnosti po otevření. Je-li na obalu pouze měsíc a rok, ověř rozhodný den podle jeho pokynů, nebo nech expiraci k doplnění.</p>
+    </fieldset>
+
+    <fieldset data-wizard-step>
+        <legend>4. Umístění a sledování</legend>
+        <div class="field"><label asp-for="Input.LekarnickaId">Lékárnička / první pomoc *</label>
+            <select asp-for="Input.LekarnickaId">
+                <option value="0">Vyber sadu</option>
+                @foreach (var p in Model.Sady) { <option value="@p.Id">@p.Nazev</option> }
+            </select><span asp-validation-for="Input.LekarnickaId"></span>
+        </div>
+        <div class="field"><label><input asp-for="Input.SledovatExpiraci" /> Zobrazovat upozornění na expiraci (60 dní předem)</label></div>
+        <div class="field"><label asp-for="Input.Poznamka">Poznámka ke krabičce</label><textarea asp-for="Input.Poznamka"></textarea></div>
+    </fieldset>
+
+    <fieldset data-wizard-step>
+        <legend>5. Kontrola a uložení</legend>
+        <p>Uloží se jedna krabička. Další krabička stejného přípravku dostane vlastní expiraci a zůstatek.</p>
+        <dl id="wizard-summary"></dl>
+        <noscript><p>Zkontroluj údaje ve formuláři výše a potvrď uložení.</p></noscript>
+        <button type="submit" class="btn">@(Model.Uprava ? "Uložit změny" : "Uložit krabičku")</button>
+        @if (!Model.Uprava)
+        {
+            <button type="submit" name="pridatDalsi" value="true" class="btn btn--secondary">Uložit a přidat další</button>
+        }
+    </fieldset>
+    <div class="actions" id="wizard-navigation" hidden>
+        <button type="button" id="wizard-back" class="btn btn--secondary">Zpět</button>
+        <button type="button" id="wizard-next" class="btn">Pokračovat</button>
+    </div>
+    <a href="/Polozky/Detail?id=@Model.Input.LekarnickaId">Zrušit</a>
+</form>
+}
+@section Scripts {
+    <script src="/js/vendor/zxing-browser.min.js" defer></script>
+    <script src="/js/barcode.js" defer></script>
+    <script src="/js/lek-wizard.js" defer></script>
+}

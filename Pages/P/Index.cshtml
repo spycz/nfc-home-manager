@@ -129,7 +129,7 @@ else
             }
         }
 
-        @if (p.Rezim == NfcRezim.Lekarnicka)
+        @if (p.Rezim is NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc)
         {
             <h3>Léky a prostředky</h3>
             @if (p.Leky.Count == 0)
@@ -198,3 +198,4 @@ else
         }
     </div>
 }
+

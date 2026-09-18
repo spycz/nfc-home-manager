@@ -7,6 +7,17 @@ public class Lek
 {
     public int Id { get; set; }
 
+    // Jeden řádek představuje jednu fyzickou krabičku. Starší řádky mohou
+    // zůstat bez vazby; jejich původní údaje se automaticky nepřepisují.
+    public int? PripravekId { get; set; }
+    public LekPripravek? Pripravek { get; set; }
+    public string? OperaceId { get; set; }
+    public string? Sarze { get; set; }
+    public DateOnly? DatumOtevreni { get; set; }
+    public bool SledovatExpiraci { get; set; } = true;
+    public int Verze { get; set; }
+    public DateTime? UpravenoUtc { get; set; }
+
     public int LekarnickaId { get; set; }
     public Polozka? Lekarnicka { get; set; }
 

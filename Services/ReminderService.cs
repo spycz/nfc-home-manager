@@ -74,7 +74,7 @@ public static class ReminderService
             // aby dřív expirující nezastinil ten s pozdejsim datem.
             foreach (var lek in p.Leky)
             {
-                if (lek.Expirace is { } lekExpirace && lekExpirace <= hranice)
+                if (lek.SledovatExpiraci && lek.Mnozstvi != 0 && lek.Expirace is { } lekExpirace && lekExpirace <= hranice)
                 {
                     vysledek.Add(new Upozorneni
                     {
@@ -90,3 +90,4 @@ public static class ReminderService
         return [.. vysledek.OrderBy(u => u.Datum)];
     }
 }
+
