@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NfcHomeManager.Data;
 
-// Malý verzovaný aditivní upgrade pro existující databáze vytvořené EnsureCreated.
+// Malý aditivní upgrade pro existující databáze vytvořené EnsureCreated.
 // Nevydává se za EF migraci. Před první změnou starého schématu vytváří SQLite backup.
 public static class LekSchemaUpgrade
 {

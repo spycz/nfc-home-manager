@@ -47,6 +47,16 @@ public class PridatModel(AppDbContext db) : PageModel
                 DatumOtevreni = lek.DatumOtevreni, Poznamka = lek.Poznamka,
                 SledovatExpiraci = lek.SledovatExpiraci
             };
+            var product = Pripravky.FirstOrDefault(p => p.Id == lek.PripravekId);
+            if (product is not null)
+            {
+                Input.Nazev = product.Nazev;
+                Input.Sila = product.Sila;
+                Input.Forma = product.Forma;
+                Input.ObsahBaleni = product.ObsahBaleni;
+                Input.Jednotka = product.Jednotka;
+                Input.Ean = product.Ean;
+            }
         }
         return Page();
     }
@@ -113,6 +123,11 @@ public class PridatModel(AppDbContext db) : PageModel
             }
 
             var product = selected is null ? null : await db.LekPripravky.FindAsync([selected.Id], ct);
+            if (selected is not null && product is null)
+            {
+                ModelState.AddModelError("Input.PripravekId", "Přípravek mezitím zmizel. Vyber jej znovu.");
+                return Page();
+            }
             if (product is null)
             {
                 var key = ProductKey(Input);

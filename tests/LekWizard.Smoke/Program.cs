@@ -101,6 +101,10 @@ try
     using (var db = new AppDbContext(options))
     {
         var box = await db.Leky.SingleAsync(l => l.OperaceId == first.OperaceId); boxId = box.Id;
+        var edit = Page(db, new LekWizardInput());
+        Check(await edit.OnGetAsync(null, box.Id, default) is PageResult, "Edit load failed");
+        Check(edit.Input.Nazev == "Test přípravek" && edit.Input.Sila == "500 mg" && edit.Input.ObsahBaleni == 20,
+            "Edit requires JavaScript to populate product");
         var detail = new DetailModel(db);
         Check(await detail.OnPostUpravitMnozstviLekuAsync(sada, box.Id, -1, box.Verze, default) is RedirectResult, "Decrement failed");
     }
