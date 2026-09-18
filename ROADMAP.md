@@ -180,6 +180,8 @@ Všechny scénáře mění data až po přihlášení a potvrzení; samotné na�
 
 ## 10. Pilot: rodinná lékárnička a první pomoc
 
+Podrobný [průvodce přidáním léku a porovnání současného a navrženého datového modelu](docs/LEK_WIZARD.md) vychází z kontroly kódu dne 18. 9. 2026. Obsahuje pět kroků, mapování polí Polozka/Lek/LekovyKatalog, návrh vazeb, migraci a podmínky ověření.
+
 Návrh doplněný 17. 9. 2026, zatím bez implementace. Obecná šablona domácí a výletní sady. Konkrétní léčiva se zadávají až podle skutečných krabiček; neodhadovat název, sílu, formu ani dávkování. Osobní zdravotní údaje nejsou součástí této dokumentace.
 
 ### Uspořádání a výchozí obsah
