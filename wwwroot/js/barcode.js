@@ -86,9 +86,10 @@
                         const ean = result.getText();
                         if (eanTarget) {
                             eanTarget.value = ean;
+                            eanTarget.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                         closeOverlay(overlay);
-                        lookupBarcode(ean, nameTarget, brandTarget);
+                        if (!button.hasAttribute('data-skip-lookup')) lookupBarcode(ean, nameTarget, brandTarget);
                     }
                 }
             );
@@ -104,3 +105,4 @@
         }
     });
 })();
+

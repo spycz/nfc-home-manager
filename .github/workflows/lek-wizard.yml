@@ -1,0 +1,19 @@
+name: Build and medicine wizard checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.201
+      - run: dotnet build NfcHomeManager.csproj --configuration Release
+      - run: dotnet run --project tests/LekWizard.Smoke/LekWizard.Smoke.csproj --configuration Release

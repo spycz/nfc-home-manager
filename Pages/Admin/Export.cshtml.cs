@@ -20,13 +20,15 @@ public class ExportModel(AppDbContext db) : PageModel
     {
         var export = new
         {
+            VerzeFormatu = 2,
             ExportovanoUtc = DateTime.UtcNow,
             Mistnosti = await db.Mistnosti.AsNoTracking().ToListAsync(ct),
             Kategorie = await db.Kategorie.AsNoTracking().ToListAsync(ct),
             Polozky = await db.Polozky.AsNoTracking().ToListAsync(ct),
             ServisniZaznamy = await db.ServisniZaznamy.AsNoTracking().ToListAsync(ct),
             Pojisteni = await db.Pojisteni.AsNoTracking().ToListAsync(ct),
-            Leky = await db.Leky.AsNoTracking().ToListAsync(ct)
+            Leky = await db.Leky.AsNoTracking().ToListAsync(ct),
+            LekPripravky = await db.LekPripravky.AsNoTracking().ToListAsync(ct)
         };
 
         var json = JsonSerializer.Serialize(export, new JsonSerializerOptions { WriteIndented = true });
@@ -36,3 +38,4 @@ public class ExportModel(AppDbContext db) : PageModel
         return File(bytes, "application/json", fileName);
     }
 }
+

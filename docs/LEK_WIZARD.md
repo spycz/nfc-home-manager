@@ -1,6 +1,21 @@
 # Průvodce přidáním léku a návrh datového modelu
 
-Návrh z 18. 9. 2026. Navazuje na kapitolu 10 [roadmapy](../ROADMAP.md). Jde o specifikaci pro implementaci; aplikace ani databáze tímto dokumentem nebyly změněny.
+Návrh z 18. 9. 2026. Navazuje na kapitolu 10 [roadmapy](../ROADMAP.md). Následující kapitoly popisují cílovou specifikaci. Rozsah první implementace je uveden níže.
+
+## První implementace bez importu (18. 9. 2026)
+
+- Stránka `/Leky/Pridat` nabízí pět kroků s ručním názvem, silou, formou, obsahem balení a volitelným EAN/GTIN. Bez JavaScriptu je dostupný celý formulář. Kamera je volitelná a nepoužívá externí lookup.
+- `LekPripravek` prozatím spojuje přípravek a obchodní velikost balení do jedné ručně potvrzené varianty. `Lek` představuje samostatnou krabičku s volitelnou vazbou na variantu. Plné rozdělení katalogu z kapitoly 5 zůstává budoucím návrhem.
+- Uloženou variantu lze vybrat z vlastní evidence. Krabička má zůstatek (nebo explicitně neznámý), vlastní datum expirace (nebo k doplnění), šarži, datum otevření, poznámku a přepínač upozornění. Přidání i úprava fungují v Lékárničce i První pomoci.
+- Opakované odeslání přidání používá unikátní ID operace. Úpravy a rychlá změna množství kontrolují verzi krabičky, takže zastaralý formulář nepřepíše novější zůstatek.
+- Existující řádky nejsou automaticky slučovány ani přejmenovány. Při úpravě lze ručně vytvořit/přiřadit přípravek. Původní zdravotní poznámky zůstávají zachované.
+- `LekSchemaUpgrade` je úzký aditivní upgrade existujícího schématu vytvořeného přes EnsureCreated. Před změnou vytvoří konzistentní SQLite zálohu vedle databáze (včetně WAL), poté přidá tabulku/sloupce/indexy v transakci. Selhání zálohy zastaví upgrade. Není to obecný systém EF migrací.
+- JSON export má verzi 2 a obsahuje také ruční přípravky. Upozornění respektují přepínač balení a nulový zůstatek. Sadu s evidovanými léky/prostředky nelze smazat kaskádově přes detail.
+- Dosud není implementován import SÚKL/PIL, účinné látky, odborný popis použití, historie pohybů, automatická použitelnost po otevření, zadání expirace pouze měsíc/rok ani samostatné NFC krabičky. Datum expirace se neodvozuje od záruky. Dosavadní importní stránka zůstává oddělená a wizard ji nepoužívá.
+
+Před nasazením zastavit zápisy ostatních instancí a uchovat zálohu mimo server. Ověřit upgrade na kopii vlastní databáze. Obnova spočívá ve vrácení původní databáze při zastavené aplikaci a použití odpovídající původní verze aplikace; nové záznamy vzniklé po upgradu tím budou ztraceny.
+
+Ověření: `dotnet build NfcHomeManager.csproj` a `dotnet run --project tests/LekWizard.Smoke/LekWizard.Smoke.csproj`. Smoke testy používají dočasnou SQLite, kontrolují zachování původních dat a čitelnost zálohy, opakování upgradu, sdílení přípravku, oddělené expirace, idempotenci přidání, neplatné rodiče a souběžné změny. GitHub workflow provádí stejné kontroly. Kamera a skutečné mobilní ovládání vyžadují ruční kontrolu na HTTPS.
 
 ## 1. Ověřený současný stav
 
@@ -143,3 +158,4 @@ Katalog bez EAN je validní. Produkt bez známé velikosti lze uložit jako neú
 8. Sada PrvniPomoc přijme lék stejným průvodcem; nepovolený nebo archivovaný rodič se odmítne i při ručně sestaveném POST.
 9. Chybějící PIL neblokuje uložení. Leták jiné síly/formy se bez ověřené vazby nepřipojí.
 10. Migrace a obnova zachovají původní množství, poznámky, umístění a existující NFC odkazy. Nejasné původní zásoby zůstanou označené k doplnění.
+
