@@ -43,7 +43,6 @@ public class UpravitModel(AppDbContext db) : PageModel
             DatumPorizeni = polozka.DatumPorizeni,
             CenaKc = polozka.CenaKc,
             ZarukaMesice = polozka.ZarukaMesice,
-            DalsiServisDo = polozka.DalsiServisDo,
             MaVlastniNfcKartu = polozka.MaVlastniNfcKartu,
             Verejna = polozka.Verejna,
             SledovatPojisteni = polozka.SledovatPojisteni,
@@ -92,7 +91,6 @@ public class UpravitModel(AppDbContext db) : PageModel
         polozka.DatumPorizeni = Input.DatumPorizeni;
         polozka.CenaKc = Input.CenaKc;
         polozka.ZarukaMesice = Input.ZarukaMesice;
-        polozka.DalsiServisDo = Input.DalsiServisDo;
         polozka.MaVlastniNfcKartu = Input.MaVlastniNfcKartu;
         polozka.Verejna = Input.Verejna;
         polozka.SledovatPojisteni = Input.SledovatPojisteni;

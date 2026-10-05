@@ -50,7 +50,6 @@ public class NovyModel(AppDbContext db) : PageModel
             DatumPorizeni = Input.DatumPorizeni,
             CenaKc = Input.CenaKc,
             ZarukaMesice = Input.ZarukaMesice,
-            DalsiServisDo = Input.DalsiServisDo,
             MaVlastniNfcKartu = Input.MaVlastniNfcKartu,
             Verejna = Input.Verejna,
             SledovatPojisteni = Input.SledovatPojisteni,
@@ -124,8 +123,6 @@ public class PolozkaFormInput
 
     [Range(0, 240)]
     public int ZarukaMesice { get; set; } = 24;
-
-    public DateOnly? DalsiServisDo { get; set; }
 
     public bool MaVlastniNfcKartu { get; set; } = true;
     public bool Verejna { get; set; }

@@ -138,10 +138,6 @@
     </div>
 
     <div class="field">
-        <label for="Input_DalsiServisDo">Příští plánovaný servis / STK</label>
-        <input id="Input_DalsiServisDo" type="date" asp-for="DalsiServisDo" />
-    </div>
-    <div class="field">
         <label for="Input_Expirace">Obecná expirace (baterie, chemie…)</label>
         <input id="Input_Expirace" type="date" asp-for="Expirace" />
     </div>
@@ -156,6 +152,7 @@
         <label><input type="checkbox" asp-for="SledovatServis" /> servisní interval</label>
         <label><input type="checkbox" asp-for="SledovatRevizi" /> revize / STK</label>
     </div>
+    <p class="muted">Termíny servisu, STK, revize či výměny filtru nastavíš po uložení na detailu položky — každý zvlášť.</p>
 </div>
 
 <div class="field">

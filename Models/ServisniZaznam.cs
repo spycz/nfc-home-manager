@@ -21,8 +21,11 @@ public class ServisniZaznam
     public decimal? CenaKc { get; set; }
     public string? Provozovna { get; set; }
 
-    // Napr. dalsi planovany servis nebo termin STK.
+    // Pristi termin nastaveny timto zaznamem a jeho druh. Zustava v historii
+    // i po pozdejsi zmene terminu; aktualni plan je v Polozka.Terminy.
+    // U zaznamu z doby pred oddelenim terminu je druh neznamy (null).
     public DateOnly? DalsiTerminDo { get; set; }
+    public TerminTyp? DalsiTerminTyp { get; set; }
 
     public DateTime VytvorenoUtc { get; set; } = DateTime.UtcNow;
 }

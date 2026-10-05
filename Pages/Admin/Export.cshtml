@@ -8,9 +8,10 @@
 
 <div class="card">
     <p class="muted">
-        Stáhne kompletní obsah databáze (místnosti, kategorie, položky, servisní
-        záznamy, pojištění, léky) jako jeden JSON soubor. Slouží jako záloha —
-        SQLite soubor na hostingu není odjinud zálohovaný automaticky.
+        Stáhne obsah databáze (místnosti, kategorie, položky, servisní
+        záznamy, plánované termíny, pojištění, léky) jako jeden JSON soubor.
+        Neobsahuje katalog léků SÚKL a zatím z něj nejde data obnovit; před
+        každou migrací databáze vzniká vedle ní automaticky soubor .bak.
     </p>
     <a class="btn" href="/Admin/Export?handler=Stahnout">Stáhnout JSON export</a>
 </div>
