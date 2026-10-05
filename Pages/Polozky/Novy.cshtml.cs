@@ -23,6 +23,7 @@ public class NovyModel(AppDbContext db) : PageModel
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         await NacistCiselnikyAsync(ct);
+        await PolozkaPravidla.ValidovatAsync(db, Input, null, ModelState, ct);
 
         if (!ModelState.IsValid)
         {
@@ -51,6 +52,7 @@ public class NovyModel(AppDbContext db) : PageModel
             ZarukaMesice = Input.ZarukaMesice,
             DalsiServisDo = Input.DalsiServisDo,
             MaVlastniNfcKartu = Input.MaVlastniNfcKartu,
+            Verejna = Input.Verejna,
             SledovatPojisteni = Input.SledovatPojisteni,
             SledovatExpiraci = Input.SledovatExpiraci,
             SledovatServis = Input.SledovatServis,
@@ -126,6 +128,7 @@ public class PolozkaFormInput
     public DateOnly? DalsiServisDo { get; set; }
 
     public bool MaVlastniNfcKartu { get; set; } = true;
+    public bool Verejna { get; set; }
     public bool SledovatPojisteni { get; set; }
     public bool SledovatExpiraci { get; set; }
     public bool SledovatServis { get; set; }

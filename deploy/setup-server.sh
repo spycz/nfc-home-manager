@@ -3,11 +3,11 @@
 # pro beh NFC domacnosti. Spustit jako root/sudo.
 set -euo pipefail
 
-echo "== ASP.NET Core 9 runtime =="
+echo "== ASP.NET Core 10 runtime =="
 wget "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
 dpkg -i /tmp/packages-microsoft-prod.deb
 apt-get update
-apt-get install -y aspnetcore-runtime-9.0
+apt-get install -y aspnetcore-runtime-10.0
 
 echo "== Caddy (automaticke HTTPS) =="
 apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl

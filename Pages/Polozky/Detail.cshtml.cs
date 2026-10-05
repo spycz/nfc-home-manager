@@ -42,6 +42,13 @@ public class DetailModel(AppDbContext db) : PageModel
             return NotFound();
         }
 
+        // Neplatnou hodnotu vyctu binder nahradi vychozi a zapise jen chybu do
+        // ModelState - ta musi byt zachycena pred ModelState.Clear() nize.
+        if (ModelState[$"{nameof(NovyServis)}.{nameof(NovyServis.Typ)}"]?.Errors.Count > 0)
+        {
+            return BadRequest();
+        }
+
         // Vycistit ModelState od validace nesouvisejicich formularu navazanych
         // na stejnou stranku a validovat jen prave odeslany model.
         ModelState.Clear();
@@ -133,6 +140,11 @@ public class DetailModel(AppDbContext db) : PageModel
             return NotFound();
         }
 
+        if (!PolozkaPravidla.MuzeMitObsah(Polozka.Rezim) || !Polozka.Aktivni)
+        {
+            return BadRequest();
+        }
+
         ModelState.Clear();
         if (!TryValidateModel(NovyObsah, nameof(NovyObsah)))
         {
@@ -171,6 +183,11 @@ public class DetailModel(AppDbContext db) : PageModel
         if (!await NacistPolozkuAsync(id, ct))
         {
             return NotFound();
+        }
+
+        if (!PolozkaPravidla.MuzeMitLeky(Polozka.Rezim) || !Polozka.Aktivni)
+        {
+            return BadRequest();
         }
 
         ModelState.Clear();
@@ -214,13 +231,21 @@ public class DetailModel(AppDbContext db) : PageModel
     }
 
     // Rychla uprava mnozstvi o +/-1 (napr. "vzal jsem si prasek", "pouzil sroub"),
-    // beze nutnosti otevirat cely editacni formular. Nejde pod nulu.
+    // beze nutnosti otevirat cely editacni formular. Povolena je jen zmena o
+    // jednu jednotku a jen u vyplneneho mnozstvi; odber pod nulu se odmitne
+    // (neoriznout potichu na nulu - chybny odber by zmizel bez stopy).
     public async Task<IActionResult> OnPostUpravitMnozstviAsync(int id, decimal delta, CancellationToken ct)
     {
         var polozka = await db.Polozky.FindAsync([id], ct);
         if (polozka is not null)
         {
-            polozka.Mnozstvi = Math.Max(0, (polozka.Mnozstvi ?? 0) + delta);
+            if (NovaHodnotaMnozstvi(polozka.Mnozstvi, delta) is not { } nove)
+            {
+                return BadRequest();
+            }
+
+            polozka.Mnozstvi = nove;
+            polozka.UpravenoUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
         }
 
@@ -232,11 +257,27 @@ public class DetailModel(AppDbContext db) : PageModel
         var lek = await db.Leky.FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
         if (lek is not null)
         {
-            lek.Mnozstvi = Math.Max(0, (lek.Mnozstvi ?? 0) + delta);
+            if (NovaHodnotaMnozstvi(lek.Mnozstvi, delta) is not { } nove)
+            {
+                return BadRequest();
+            }
+
+            lek.Mnozstvi = nove;
             await db.SaveChangesAsync(ct);
         }
 
         return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    private static decimal? NovaHodnotaMnozstvi(decimal? puvodni, decimal delta)
+    {
+        if (puvodni is not { } hodnota || delta is not (1 or -1))
+        {
+            return null;
+        }
+
+        var nove = hodnota + delta;
+        return nove is < 0 or > PolozkaPravidla.MaxMnozstvi ? null : nove;
     }
 
     public async Task<IActionResult> OnPostSmazatPolozkuAsync(int id, CancellationToken ct)

@@ -68,6 +68,14 @@ public class Polozka
     // Priznaky rikaji, jake vlastnosti se u teto konkretni polozky maji
     // sledovat/zobrazovat - napr. lampa nepotrebuje pojisteni ani revizi.
     public bool MaVlastniNfcKartu { get; set; } = true;
+
+    // Smi se stranka /p/{Kod} zobrazit i neprihlasenemu? Vychozi je soukroma
+    // polozka - znalost URL neni dukaz fyzickeho prilozeni telefonu (odkaz
+    // lze opsat, sdilet nebo znovu otevrit z historie). Lekarnicka a prvni
+    // pomoc jsou vzdy soukrome bez ohledu na tento priznak.
+    public bool Verejna { get; set; }
+
+    public bool JeVerejnaStranka => Verejna && Rezim is not (NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc);
     public bool SledovatPojisteni { get; set; }
     public bool SledovatExpiraci { get; set; }
     public bool SledovatServis { get; set; }

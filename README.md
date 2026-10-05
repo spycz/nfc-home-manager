@@ -14,15 +14,24 @@ v databázi a vlastní krátký kód. Na fyzický NTAG215 štítek se zapíše
 https://nfc.scitani1921.cz/p/AB12XZ7
 ```
 
-Po přiložení telefonu k štítku se otevře veřejná stránka položky (bez
-přihlášení) se stavem záruky, historií servisu apod. Adresu pro zápis
-najdeš na detailu položky v administraci (`/Polozky/Detail?id=…`).
+Po přiložení telefonu k štítku se otevře stránka položky se stavem
+záruky, historií servisu apod. Nové položky jsou soukromé — stránku
+uvidí jen přihlášený. Bez přihlášení se zobrazí jen položky, u kterých
+je výslovně zaškrtnutá **veřejná stránka**. Adresu pro zápis najdeš na
+detailu položky v administraci (`/Polozky/Detail?id=…`).
 
 ## Databáze
 
 SQLite soubor (`nfc-home.db` lokálně). Schéma se při prvním startu
 vytvoří automaticky (`EnsureCreated`) a naplní se výchozím seznamem
-místností a kategorií — žádné migrace nejsou potřeba.
+místností a kategorií. Sloupce přidané později (zatím `Polozky.Verejna`)
+doplní do existující databáze `DbInitializer` při startu; plnohodnotné
+EF Core migrace jsou v plánu (viz ROADMAP, kap. 6). Před nasazením nové
+verze databázi zazálohuj.
+
+Po aktualizaci jsou všechny dosavadní položky **soukromé**. Na svém
+přihlášeném telefonu se nic nezmění; u věcí, které mají jít otevřít i
+bez přihlášení, zapni v úpravě položky „veřejná stránka“.
 
 Evidované údaje k položce: kategorie, místnost, výrobce/typ, sériové
 číslo, datum pořízení, cena, délka a konec záruky, příští plánovaný
@@ -32,7 +41,7 @@ smlouvy, platnost, roční cena).
 
 U každé položky se navíc zvlášť zaškrtává, co se u ní má sledovat: má
 vlastní NFC kartu, pojištění, obecnou expiraci, servisní interval,
-revizi/STK. Sekce v administraci i na veřejné stránce se zobrazují jen
+revizi/STK. Sekce v administraci i na stránce /p/{kod} se zobrazují jen
 podle toho, co je relevantní — lampa tak není zahlcená poli pro
 pojištění.
 
@@ -41,7 +50,7 @@ pojištění.
 - **Předmět** — běžná evidovaná věc (výchozí).
 - **Krabice / místnost** (`Kontejner`) — naskenování ukáže seznam věcí
   uvnitř. Obsahem může být předmět bez vlastní karty (jen položka v
-  seznamu) i předmět s vlastní kartou a vlastní veřejnou stránkou
+  seznamu) i předmět s vlastní kartou a vlastní stránkou
   (např. krabice s barvami obsahuje váleček a fólii bez karty, ale
   elektrická stříkací pistole svou vlastní kartu má).
 - **Lékárnička** — drží seznam léků/prostředků (`Lek`): název, expirace,
@@ -59,11 +68,13 @@ STK/revize a servis se pořád evidují přes běžné servisní záznamy.
 
 Přehledová stránka (`/`) ukazuje věci, kterým se blíží konec záruky,
 naplánovaný servis/STK, konec pojištění nebo expirace (včetně expirace
-jednotlivých léků v lékárničce) — výhled 60 dní.
+jednotlivých léků v lékárničce) — výhled 60 dní. Servis/STK, pojištění
+a obecná expirace se hlásí jen tehdy, když má položka zapnuté jejich
+sledování; vypnutý příznak staré datum z připomínek vyřadí.
 
 ## Přihlášení
 
-Administrace (vše kromě veřejné stránky `/p/{kod}`) vyžaduje přihlášení
+Administrace (vše kromě stránky `/p/{kod}` u veřejných položek) vyžaduje přihlášení
 jedním účtem nastaveným v `appsettings`. Heslo se ukládá jako PBKDF2
 hash, nikdy v čitelné podobě. Vygenerování hashe:
 
@@ -92,15 +103,23 @@ jsou gitignored, založ si je podle přiložených `.example` šablon.
 - `noindex` meta tag na všech stránkách + `robots.txt` zakazující
   procházení — inventář domácnosti (a hlavně lékárnička) se nemá dostat
   do vyhledávačů.
-- Veřejná stránka `/p/{kod}` je bez přihlášení pro běžné předměty a
-  krabice — smysl NFC skenování (fyzická blízkost pár cm ke štítku je
-  dost silná "důvěra"). **Lékárnička a první pomoc jsou výjimka:** ty
-  nesou rodinná zdravotní data, takže `/p/{kod}` na ně vyžaduje
-  přihlášení, pokud dané zařízení/prohlížeč ještě není přihlášené.
-  Prakticky to znamená: na svém telefonu se přihlásíš jednou (30denní
-  cookie se sama prodlužuje), pak skenuješ bez dalšího otravování; z
-  cizího PC nebo prohlížeče, který se nikdy nepřihlásil, tě to pošle na
-  login. Implementováno v `Pages/P/Index.cshtml.cs`.
+- **Znalost URL není důkaz přiložení telefonu.** Odkaz ze štítku lze
+  opsat, sdílet nebo znovu otevřít z historie prohlížeče. Stránka
+  `/p/{kod}` proto bez přihlášení ukáže jen položku označenou jako
+  **veřejná** (příznak `Verejna`, výchozí vypnutý), a to bez poznámky a
+  sériového čísla. Soukromý obsah veřejné krabice ani soukromý rodičovský
+  kontejner se nepřihlášenému nevypisují.
+- **Lékárnička a první pomoc nejsou veřejné nikdy** — nesou rodinná
+  zdravotní data. Na svém telefonu se přihlásíš jednou (30denní cookie
+  se sama prodlužuje), pak skenuješ bez dalšího otravování; z cizího
+  prohlížeče tě soukromá stránka pošle na login.
+- Neznámý kód i archivovaná položka vrací nepřihlášenému HTTP 404 se
+  stejnou hláškou, takže z odpovědi nejde poznat, které kódy existují.
+  Implementováno v `Pages/P/Index.cshtml.cs`.
+- Vztahy se ověřují na serveru (`Services/PolozkaPravidla.cs`): žádný
+  cyklus krabic, obsah jen do krabice / první pomoci, léky jen do
+  lékárničky, platné hodnoty výčtů a změna množství jen o ±1 bez
+  podtečení pod nulu.
 
 ### Množství
 
@@ -204,9 +223,8 @@ samostatnou subdoménu:
    ```
 4. Nahraj obsah `publish/forpsi/` do cílové složky subdomény (FTP údaje
    viz `.env.forpsi`, šablona v `.env.forpsi.example`).
-5. Ověř, že aplikační pool subdomény běží na **.NET 9** (stejně jako
-   hlavní web) a že má právo zapisovat do své složky — SQLite soubor
-   `nfc-home.db` se vytváří přímo vedle `.dll` při prvním startu.
+5. Ověř, že aplikační pool subdomény běží na **.NET 10** a že má právo
+   zapisovat do své složky — SQLite soubor `nfc-home.db` se vytváří přímo vedle `.dll` při prvním startu.
 
 Pokud Forpsi neumožní přiřadit subdoméně vlastní .NET aplikační pool
 odděleně od hlavního webu, je potřeba to vyřešit na úrovni hostingu
@@ -231,7 +249,7 @@ serveru, zbytek `scitani1921.cz` zůstává na Forpsi beze změny.
    lokálního firewallu (`ufw`) povolit porty **80** a **443** i v
    **VCN → Security Lists → Ingress Rules** — to je nejčastější důvod,
    proč appka "není vidět" i když na serveru vypadá vše v pořádku.
-2. Spusť jednorázovou přípravu serveru (nainstaluje ASP.NET Core 9
+2. Spusť jednorázovou přípravu serveru (nainstaluje ASP.NET Core 10
    runtime, Caddy, vytvoří systémový účet a složky):
    ```bash
    sudo bash deploy/setup-server.sh

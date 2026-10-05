@@ -22,3 +22,7 @@ App_Data/
 .DS_Store
 appsettings.json
 ssh-key-2026-08-27.key
+
+# Exporty dat domacnosti a DNS zony - osobni data, do repozitare nepatri
+nfc-home-export-*.json
+dns-*.csv
