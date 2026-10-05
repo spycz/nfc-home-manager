@@ -10,7 +10,7 @@
 {
     <div class="card public-item">
         <h1>Položka nenalezena</h1>
-        <p class="muted">Tento NFC štítek neodpovídá žádné evidované položce.</p>
+        <p class="muted">Tento NFC štítek neodpovídá žádné aktivní evidované položce. Štítek mohl být vyřazen nebo přiřazen jinam.</p>
     </div>
 }
 else
@@ -20,6 +20,11 @@ else
     <div class="card public-item">
         <p class="muted">@(p.Kategorie?.Nazev ?? "bez kategorie") · @(p.Mistnost?.Nazev ?? "bez místnosti")</p>
         <h1>@p.Nazev</h1>
+
+        @if (!p.Aktivni)
+        {
+            <p><span class="badge badge--overdue">Archivováno</span> Položka už není aktivní; stránku vidíš jen díky přihlášení.</p>
+        }
 
         @if (p.Kontejner is { } kontejner)
         {
@@ -38,7 +43,7 @@ else
                     {
                         <tr><th>Výrobce / typ</th><td>@p.Vyrobce @p.Model</td></tr>
                     }
-                    @if (!string.IsNullOrWhiteSpace(p.SerioveCislo))
+                    @if (Model.JePrihlaseny && !string.IsNullOrWhiteSpace(p.SerioveCislo))
                     {
                         <tr><th>Sériové číslo</th><td>@p.SerioveCislo</td></tr>
                     }
@@ -79,7 +84,7 @@ else
                 </tbody>
             </table>
 
-            @if (!string.IsNullOrWhiteSpace(p.Poznamka))
+            @if (Model.JePrihlaseny && !string.IsNullOrWhiteSpace(p.Poznamka))
             {
                 <p><strong>Poznámka:</strong> @p.Poznamka</p>
             }
@@ -105,14 +110,18 @@ else
         @if (p.Rezim is NfcRezim.Kontejner or NfcRezim.PrvniPomoc)
         {
             <h3>Obsah</h3>
-            @if (p.Obsah.Count == 0)
+            @if (Model.ViditelnyObsah.Count == 0 && Model.SkrytychPolozek == 0)
             {
                 <p class="muted">Prázdné.</p>
+            }
+            else if (Model.ViditelnyObsah.Count == 0)
+            {
+                <p class="muted">Obsah je soukromý — zobrazí se po přihlášení.</p>
             }
             else
             {
                 <ul>
-                    @foreach (var o in p.Obsah)
+                    @foreach (var o in Model.ViditelnyObsah)
                     {
                         <li>
                             @if (o.MaVlastniNfcKartu)
@@ -126,6 +135,10 @@ else
                         </li>
                     }
                 </ul>
+                @if (Model.SkrytychPolozek > 0)
+                {
+                    <p class="muted">Další soukromé položky (@Model.SkrytychPolozek) se zobrazí po přihlášení.</p>
+                }
             }
         }
 
@@ -190,7 +203,7 @@ else
             }
         }
 
-        @if (User.Identity?.IsAuthenticated == true)
+        @if (Model.JePrihlaseny)
         {
             <div class="actions">
                 <a class="btn btn--secondary" href="/Polozky/Detail?id=@p.Id">Otevřít v administraci</a>

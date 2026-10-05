@@ -43,12 +43,17 @@ public static class ReminderService
                 vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Zaruka, Datum = zarukaDo, Popis = "Konec záruky" });
             }
 
-            if (p.DalsiServisDo is { } dalsiServisDo && dalsiServisDo <= hranice)
+            // Upozorneni jen u vlastnosti, ktere ma polozka zapnute ke sledovani -
+            // vypnuty priznak znamena "tohle me u teto veci nezajima", i kdyz
+            // v databazi zustalo stare datum. Zaruka priznak nema, sleduje se
+            // vzdy, kdyz je vyplnene datum porizeni.
+            if ((p.SledovatServis || p.SledovatRevizi) &&
+                p.DalsiServisDo is { } dalsiServisDo && dalsiServisDo <= hranice)
             {
                 vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Servis, Datum = dalsiServisDo, Popis = "Plánovaný servis / STK" });
             }
 
-            if (p.Expirace is { } expirace && expirace <= hranice)
+            if (p.SledovatExpiraci && p.Expirace is { } expirace && expirace <= hranice)
             {
                 vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Expirace, Datum = expirace, Popis = "Expirace" });
             }
@@ -56,7 +61,7 @@ public static class ReminderService
             // Polozka muze mit soucasne vic aktivnich pojisteni (napr. povinne
             // ruceni + havarijni u auta) - kazde se posuzuje samostatne, aby
             // driv konciciho pojisteni nezastinilo to s pozdejsim koncem.
-            foreach (var pojisteni in p.Pojisteni)
+            foreach (var pojisteni in p.SledovatPojisteni ? p.Pojisteni : [])
             {
                 if (pojisteni.PlatnostDo is { } platnostDo && platnostDo <= hranice)
                 {

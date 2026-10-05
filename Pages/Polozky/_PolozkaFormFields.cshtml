@@ -159,6 +159,14 @@
 </div>
 
 <div class="field">
+    <label>Přístup ke stránce po přiložení telefonu</label>
+    <div class="checkbox-row">
+        <label><input type="checkbox" asp-for="Verejna" /> veřejná stránka (zobrazí se i nepřihlášenému)</label>
+    </div>
+    <p class="muted">Bez zaškrtnutí uvidí stránku jen přihlášený. Veřejná stránka nikdy neukazuje poznámku ani sériové číslo. Lékárnička a první pomoc jsou vždy soukromé.</p>
+</div>
+
+<div class="field">
     <label for="Input_Poznamka">Poznámka</label>
     <textarea id="Input_Poznamka" asp-for="Poznamka"></textarea>
 </div>

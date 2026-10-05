@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using NfcHomeManager.Data;
 using NfcHomeManager.Models;
+using NfcHomeManager.Services;
 
 namespace NfcHomeManager.Pages.Polozky;
 
@@ -44,6 +45,7 @@ public class UpravitModel(AppDbContext db) : PageModel
             ZarukaMesice = polozka.ZarukaMesice,
             DalsiServisDo = polozka.DalsiServisDo,
             MaVlastniNfcKartu = polozka.MaVlastniNfcKartu,
+            Verejna = polozka.Verejna,
             SledovatPojisteni = polozka.SledovatPojisteni,
             SledovatExpiraci = polozka.SledovatExpiraci,
             SledovatServis = polozka.SledovatServis,
@@ -60,10 +62,7 @@ public class UpravitModel(AppDbContext db) : PageModel
     {
         await NacistCiselnikyAsync(ct, Id);
 
-        if (Input.KontejnerId == Id)
-        {
-            ModelState.AddModelError("Input.KontejnerId", "Položka nemůže být kontejnerem sama pro sebe.");
-        }
+        await PolozkaPravidla.ValidovatAsync(db, Input, Id, ModelState, ct);
 
         if (!ModelState.IsValid)
         {
@@ -95,6 +94,7 @@ public class UpravitModel(AppDbContext db) : PageModel
         polozka.ZarukaMesice = Input.ZarukaMesice;
         polozka.DalsiServisDo = Input.DalsiServisDo;
         polozka.MaVlastniNfcKartu = Input.MaVlastniNfcKartu;
+        polozka.Verejna = Input.Verejna;
         polozka.SledovatPojisteni = Input.SledovatPojisteni;
         polozka.SledovatExpiraci = Input.SledovatExpiraci;
         polozka.SledovatServis = Input.SledovatServis;

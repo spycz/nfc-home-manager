@@ -48,6 +48,10 @@
             <tr><th>Sériové číslo</th><td>@(Model.Polozka.SerioveCislo ?? "—")</td></tr>
             <tr><th>Čárový kód</th><td>@(Model.Polozka.Ean ?? "—")</td></tr>
             <tr><th>NFC UID</th><td>@(Model.Polozka.NfcUid ?? "—")</td></tr>
+            <tr>
+                <th>Stránka po přiložení</th>
+                <td>@(Model.Polozka.JeVerejnaStranka ? "veřejná (bez přihlášení)" : "soukromá (jen po přihlášení)")</td>
+            </tr>
             @if (Model.Polozka.Mnozstvi.HasValue)
             {
                 <tr>
@@ -58,7 +62,7 @@
                             <form method="post" asp-page-handler="UpravitMnozstvi">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="delta" value="-1" />
-                                <button class="btn btn--secondary" type="submit">−1</button>
+                                <button class="btn btn--secondary" type="submit" disabled="@(Model.Polozka.Mnozstvi <= 0)">−1</button>
                             </form>
                             <form method="post" asp-page-handler="UpravitMnozstvi">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
@@ -121,7 +125,7 @@
 {
     <div class="card">
         <h2>Odkaz pro NFC štítek (NTAG215)</h2>
-        <p class="muted">Tento odkaz zapiš do NFC štítku (např. aplikací NFC Tools) jako NDEF URI záznam. Po přiložení telefonu se otevře veřejná stránka bez nutnosti přihlášení.</p>
+        <p class="muted">Tento odkaz zapiš do NFC štítku (např. aplikací NFC Tools) jako NDEF URI záznam. Po přiložení telefonu se otevře stránka položky — bez přihlášení jen tehdy, je-li položka označená jako veřejná. Odkaz lze opsat nebo sdílet, takže veřejnost zapínej jen u věcí, kde ti to nevadí.</p>
         <div class="nfc-url">
             <input type="text" readonly value="@Model.VerejnaUrl" id="nfc-url" data-select-target="nfc-url" />
             <button type="button" class="btn btn--secondary" data-copy-target="nfc-url">Kopírovat</button>
@@ -131,7 +135,7 @@
 else
 {
     <div class="card">
-        <p class="muted">Tato položka nemá vlastní NFC kartu — je vedená jen jako obsah kontejneru výše. Veřejná stránka <code>@Model.VerejnaUrl</code> funguje i tak, ale žádný fyzický štítek pro ni nebyl napsán.</p>
+        <p class="muted">Tato položka nemá vlastní NFC kartu — je vedená jen jako obsah kontejneru výše. Stránka <code>@Model.VerejnaUrl</code> funguje i tak, ale žádný fyzický štítek pro ni nebyl napsán.</p>
     </div>
 }
 
@@ -237,7 +241,7 @@ else
                                             <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                             <input type="hidden" name="lekId" value="@l.Id" />
                                             <input type="hidden" name="delta" value="-1" />
-                                            <button class="btn btn--secondary" type="submit">−1</button>
+                                            <button class="btn btn--secondary" type="submit" disabled="@(l.Mnozstvi <= 0)">−1</button>
                                         </form>
                                         <form method="post" asp-page-handler="UpravitMnozstviLeku">
                                             <input type="hidden" name="id" value="@Model.Polozka.Id" />
