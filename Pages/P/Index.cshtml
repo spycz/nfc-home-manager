@@ -66,9 +66,9 @@ else
                             </td>
                         </tr>
                     }
-                    @if (p.DalsiServisDo.HasValue)
+                    @foreach (var t in p.Terminy)
                     {
-                        <tr><th>Příští servis / STK</th><td>@p.DalsiServisDo.Value.ToString("d.M.yyyy")</td></tr>
+                        <tr><th>Příští @Termin.Popis(t.Typ).ToLowerInvariant()</th><td>@t.DatumDo.ToString("d.M.yyyy")</td></tr>
                     }
                     @if (p.Expirace.HasValue)
                     {

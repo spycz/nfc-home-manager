@@ -30,6 +30,7 @@ public static class ReminderService
         var polozky = await db.Polozky
             .Where(p => p.Aktivni)
             .Include(p => p.Pojisteni)
+            .Include(p => p.Terminy)
             .Include(p => p.Leky)
             .AsNoTracking()
             .ToListAsync(ct);
@@ -47,10 +48,12 @@ public static class ReminderService
             // vypnuty priznak znamena "tohle me u teto veci nezajima", i kdyz
             // v databazi zustalo stare datum. Zaruka priznak nema, sleduje se
             // vzdy, kdyz je vyplnene datum porizeni.
-            if ((p.SledovatServis || p.SledovatRevizi) &&
-                p.DalsiServisDo is { } dalsiServisDo && dalsiServisDo <= hranice)
+            foreach (var termin in p.Terminy)
             {
-                vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Servis, Datum = dalsiServisDo, Popis = "Plánovaný servis / STK" });
+                if (Termin.JeSledovany(termin.Typ, p) && termin.DatumDo <= hranice)
+                {
+                    vysledek.Add(new Upozorneni { Polozka = p, Typ = UpozorneniTyp.Servis, Datum = termin.DatumDo, Popis = $"Plánováno: {Termin.Popis(termin.Typ)}" });
+                }
             }
 
             if (p.SledovatExpiraci && p.Expirace is { } expirace && expirace <= hranice)

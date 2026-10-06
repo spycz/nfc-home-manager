@@ -25,6 +25,7 @@ public class ExportModel(AppDbContext db) : PageModel
             Kategorie = await db.Kategorie.AsNoTracking().ToListAsync(ct),
             Polozky = await db.Polozky.AsNoTracking().ToListAsync(ct),
             ServisniZaznamy = await db.ServisniZaznamy.AsNoTracking().ToListAsync(ct),
+            Terminy = await db.Terminy.AsNoTracking().ToListAsync(ct),
             Pojisteni = await db.Pojisteni.AsNoTracking().ToListAsync(ct),
             Leky = await db.Leky.AsNoTracking().ToListAsync(ct)
         };

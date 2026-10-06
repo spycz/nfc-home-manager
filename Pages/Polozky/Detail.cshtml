@@ -82,9 +82,9 @@
                     (@Model.Polozka.ZarukaMesice měsíců)
                 </td>
             </tr>
-            @if (Model.Polozka.SledovatServis || Model.Polozka.SledovatRevizi || Model.Polozka.DalsiServisDo.HasValue)
+            @foreach (var t in Model.Polozka.Terminy)
             {
-                <tr><th>Příští servis / STK</th><td>@(Model.Polozka.DalsiServisDo?.ToString("d.M.yyyy") ?? "—")</td></tr>
+                <tr><th>Příští @Termin.Popis(t.Typ).ToLowerInvariant()</th><td>@t.DatumDo.ToString("d.M.yyyy")</td></tr>
             }
             @if (Model.Polozka.SledovatExpiraci || Model.Polozka.Expirace.HasValue)
             {
@@ -361,6 +361,84 @@ else
     </div>
 }
 
+@if (Model.Polozka.SledovatServis || Model.Polozka.SledovatRevizi || Model.Polozka.Terminy.Count > 0)
+{
+<div class="card">
+    <h2>Plánované termíny</h2>
+    <p class="muted">Každý druh termínu má vlastní datum — zápis servisu nepřepíše STK ani revizi.</p>
+
+    @if (Model.Polozka.Terminy.Count == 0)
+    {
+        <p class="muted">Zatím žádný termín.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Druh</th>
+                    <th>Termín</th>
+                    <th>Poznámka</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Polozka.Terminy)
+                {
+                    <tr>
+                        <td>
+                            @Termin.Popis(t.Typ)
+                            @if (!Termin.JeSledovany(t.Typ, Model.Polozka))
+                            {
+                                <span class="muted">(sledování vypnuto)</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge @(t.DatumDo < DateOnly.FromDateTime(DateTime.Today) ? "badge--overdue" : "badge--ok")">@t.DatumDo.ToString("d.M.yyyy")</span>
+                        </td>
+                        <td>@(t.Poznamka ?? "—")</td>
+                        <td>
+                            <form method="post" asp-page-handler="SmazatTermin" data-confirm="Smazat termín?">
+                                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                <input type="hidden" name="terminId" value="@t.Id" />
+                                <button class="btn btn--secondary" type="submit">Smazat</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <h3>Nastavit termín</h3>
+    <p class="muted">Pokud termín daného druhu už existuje, nové datum ho nahradí.</p>
+    <form method="post" asp-page-handler="UlozitTermin">
+        <input type="hidden" name="id" value="@Model.Polozka.Id" />
+        <div class="form-grid">
+            <div class="field">
+                <label for="NovyTermin_Typ">Druh</label>
+                <select id="NovyTermin_Typ" asp-for="NovyTermin.Typ">
+                    @foreach (var typ in Enum.GetValues<TerminTyp>())
+                    {
+                        <option value="@typ">@Termin.Popis(typ)</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label for="NovyTermin_DatumDo">Datum *</label>
+                <input id="NovyTermin_DatumDo" type="date" asp-for="NovyTermin.DatumDo" />
+                <span asp-validation-for="NovyTermin.DatumDo" class="muted" style="color:var(--danger);"></span>
+            </div>
+            <div class="field">
+                <label for="NovyTermin_Poznamka">Poznámka</label>
+                <input id="NovyTermin_Poznamka" type="text" asp-for="NovyTermin.Poznamka" />
+            </div>
+        </div>
+        <button class="btn" type="submit">Uložit termín</button>
+    </form>
+</div>
+}
+
 @if (Model.Polozka.SledovatServis || Model.Polozka.SledovatRevizi || Model.Polozka.ServisniZaznamy.Count > 0)
 {
 <div class="card">
@@ -393,7 +471,13 @@ else
                         <td>@s.Popis</td>
                         <td>@(s.CenaKc?.ToString("N0") is { } c ? $"{c} Kč" : "—")</td>
                         <td>@(s.Provozovna ?? "—")</td>
-                        <td>@(s.DalsiTerminDo?.ToString("d.M.yyyy") ?? "—")</td>
+                        <td>
+                            @(s.DalsiTerminDo?.ToString("d.M.yyyy") ?? "—")
+                            @if (s.DalsiTerminDo.HasValue && s.DalsiTerminTyp is { } druh)
+                            {
+                                <span class="muted">(@Termin.Popis(druh))</span>
+                            }
+                        </td>
                         <td>
                             <form method="post" asp-page-handler="SmazatServis" data-confirm="Smazat záznam?">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
@@ -433,8 +517,17 @@ else
                 <input id="NovyServis_Provozovna" type="text" asp-for="NovyServis.Provozovna" />
             </div>
             <div class="field">
-                <label for="NovyServis_DalsiTerminDo">Příští termín (servis/STK)</label>
+                <label for="NovyServis_DalsiTerminDo">Příští termín</label>
                 <input id="NovyServis_DalsiTerminDo" type="date" asp-for="NovyServis.DalsiTerminDo" />
+            </div>
+            <div class="field">
+                <label for="NovyServis_DalsiTerminTyp">Druh příštího termínu</label>
+                <select id="NovyServis_DalsiTerminTyp" asp-for="NovyServis.DalsiTerminTyp">
+                    @foreach (var typ in Enum.GetValues<TerminTyp>())
+                    {
+                        <option value="@typ">@Termin.Popis(typ)</option>
+                    }
+                </select>
             </div>
         </div>
         <div class="field">
