@@ -87,8 +87,6 @@ public class Polozka
     public int ZarukaMesice { get; set; } = 24;
     public DateOnly? ZarukaDo { get; set; }
 
-    public DateOnly? DalsiServisDo { get; set; }
-
     public bool Aktivni { get; set; } = true;
     public string? Poznamka { get; set; }
 
@@ -97,6 +95,9 @@ public class Polozka
 
     public List<ServisniZaznam> ServisniZaznamy { get; set; } = [];
     public List<Pojisteni> Pojisteni { get; set; } = [];
+
+    // Pristi planovane terminy - kazdy druh (servis, STK, revize...) zvlast.
+    public List<Termin> Terminy { get; set; } = [];
 
     public void PrepocitatZaruku()
     {

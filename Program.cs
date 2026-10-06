@@ -118,7 +118,8 @@ public class Program
         using (var scope = app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            DbInitializer.Initialize(context);
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
+            DbInitializer.Initialize(context, logger);
         }
 
         if (!app.Environment.IsDevelopment())

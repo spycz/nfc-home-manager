@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Kategorie> Kategorie => Set<Kategorie>();
     public DbSet<Polozka> Polozky => Set<Polozka>();
     public DbSet<ServisniZaznam> ServisniZaznamy => Set<ServisniZaznam>();
+    public DbSet<Termin> Terminy => Set<Termin>();
     public DbSet<Pojisteni> Pojisteni => Set<Pojisteni>();
     public DbSet<Lek> Leky => Set<Lek>();
     public DbSet<LekovyKatalog> LekovyKatalog => Set<LekovyKatalog>();
@@ -56,10 +57,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(s => s.CenaKc).HasColumnType("decimal(18,2)");
             entity.Property(s => s.Typ).HasConversion<string>();
+            entity.Property(s => s.DalsiTerminTyp).HasConversion<string>();
 
             entity.HasOne(s => s.Polozka)
                 .WithMany(p => p.ServisniZaznamy)
                 .HasForeignKey(s => s.PolozkaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Termin>(entity =>
+        {
+            entity.Property(t => t.Typ).HasConversion<string>();
+            entity.HasIndex(t => new { t.PolozkaId, t.Typ }).IsUnique();
+
+            entity.HasOne(t => t.Polozka)
+                .WithMany(p => p.Terminy)
+                .HasForeignKey(t => t.PolozkaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

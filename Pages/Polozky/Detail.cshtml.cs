@@ -25,6 +25,9 @@ public class DetailModel(AppDbContext db) : PageModel
     [BindProperty]
     public NovyLekInput NovyLek { get; set; } = new();
 
+    [BindProperty]
+    public TerminInput NovyTermin { get; set; } = new();
+
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken ct)
     {
         if (!await NacistPolozkuAsync(id, ct))
@@ -44,7 +47,8 @@ public class DetailModel(AppDbContext db) : PageModel
 
         // Neplatnou hodnotu vyctu binder nahradi vychozi a zapise jen chybu do
         // ModelState - ta musi byt zachycena pred ModelState.Clear() nize.
-        if (ModelState[$"{nameof(NovyServis)}.{nameof(NovyServis.Typ)}"]?.Errors.Count > 0)
+        if (MaChybuBindingu($"{nameof(NovyServis)}.{nameof(NovyServis.Typ)}") ||
+            MaChybuBindingu($"{nameof(NovyServis)}.{nameof(NovyServis.DalsiTerminTyp)}"))
         {
             return BadRequest();
         }
@@ -65,12 +69,14 @@ public class DetailModel(AppDbContext db) : PageModel
             Popis = NovyServis.Popis.Trim(),
             CenaKc = NovyServis.CenaKc,
             Provozovna = NovyServis.Provozovna,
-            DalsiTerminDo = NovyServis.DalsiTerminDo
+            DalsiTerminDo = NovyServis.DalsiTerminDo,
+            DalsiTerminTyp = NovyServis.DalsiTerminDo.HasValue ? NovyServis.DalsiTerminTyp : null
         });
 
-        if (NovyServis.DalsiTerminDo.HasValue)
+        // Zaznam meni jen termin zvoleneho druhu - servis neprepise STK.
+        if (NovyServis.DalsiTerminDo is { } dalsiTermin)
         {
-            Polozka.DalsiServisDo = NovyServis.DalsiTerminDo;
+            NastavitTermin(NovyServis.DalsiTerminTyp, dalsiTermin, null);
         }
 
         await db.SaveChangesAsync(ct);
@@ -318,6 +324,61 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
+    // Nastavi nebo zmeni termin jednoho druhu (u polozky je nejvyse jeden od kazdeho).
+    public async Task<IActionResult> OnPostUlozitTerminAsync(int id, CancellationToken ct)
+    {
+        if (!await NacistPolozkuAsync(id, ct))
+        {
+            return NotFound();
+        }
+
+        if (MaChybuBindingu($"{nameof(NovyTermin)}.{nameof(NovyTermin.Typ)}"))
+        {
+            return BadRequest();
+        }
+
+        ModelState.Clear();
+        if (!TryValidateModel(NovyTermin, nameof(NovyTermin)))
+        {
+            return Page();
+        }
+
+        NastavitTermin(NovyTermin.Typ, NovyTermin.DatumDo!.Value, NovyTermin.Poznamka);
+        await db.SaveChangesAsync(ct);
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    public async Task<IActionResult> OnPostSmazatTerminAsync(int id, int terminId, CancellationToken ct)
+    {
+        var termin = await db.Terminy.FirstOrDefaultAsync(t => t.Id == terminId && t.PolozkaId == id, ct);
+        if (termin is not null)
+        {
+            db.Terminy.Remove(termin);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Redirect($"/Polozky/Detail?id={id}");
+    }
+
+    private void NastavitTermin(TerminTyp typ, DateOnly datumDo, string? poznamka)
+    {
+        var termin = Polozka.Terminy.FirstOrDefault(t => t.Typ == typ);
+        if (termin is null)
+        {
+            Polozka.Terminy.Add(new Termin { Typ = typ, DatumDo = datumDo, Poznamka = poznamka });
+            return;
+        }
+
+        termin.DatumDo = datumDo;
+        termin.UpravenoUtc = DateTime.UtcNow;
+        if (poznamka is not null)
+        {
+            termin.Poznamka = poznamka;
+        }
+    }
+
+    private bool MaChybuBindingu(string klic) => ModelState[klic]?.Errors.Count > 0;
+
     private async Task<bool> NacistPolozkuAsync(int id, CancellationToken ct)
     {
         var polozka = await db.Polozky
@@ -327,6 +388,7 @@ public class DetailModel(AppDbContext db) : PageModel
             .Include(p => p.Obsah.OrderBy(o => o.Nazev))
             .Include(p => p.Leky.OrderBy(l => l.Expirace))
             .Include(p => p.ServisniZaznamy.OrderByDescending(s => s.Datum))
+            .Include(p => p.Terminy.OrderBy(t => t.DatumDo))
             .Include(p => p.Pojisteni.OrderByDescending(i => i.PlatnostDo))
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
@@ -359,6 +421,20 @@ public class NovyServisInput
     public string? Provozovna { get; set; }
 
     public DateOnly? DalsiTerminDo { get; set; }
+
+    // Ktery termin se zaznamem posouva - vychozi je servis.
+    public TerminTyp DalsiTerminTyp { get; set; } = TerminTyp.Servis;
+}
+
+public class TerminInput
+{
+    public TerminTyp Typ { get; set; } = TerminTyp.Servis;
+
+    [Required(ErrorMessage = "Zadej datum termínu.")]
+    public DateOnly? DatumDo { get; set; }
+
+    [StringLength(300)]
+    public string? Poznamka { get; set; }
 }
 
 public class NovePojisteniInput

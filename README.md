@@ -22,22 +22,44 @@ detailu položky v administraci (`/Polozky/Detail?id=…`).
 
 ## Databáze
 
-SQLite soubor (`nfc-home.db` lokálně). Schéma se při prvním startu
-vytvoří automaticky (`EnsureCreated`) a naplní se výchozím seznamem
-místností a kategorií. Sloupce přidané později (zatím `Polozky.Verejna`)
-doplní do existující databáze `DbInitializer` při startu; plnohodnotné
-EF Core migrace jsou v plánu (viz ROADMAP, kap. 6). Před nasazením nové
-verze databázi zazálohuj.
+SQLite soubor (`nfc-home.db` lokálně). Schéma spravují **EF Core
+migrace** (`Data/Migrations`), které se spustí automaticky při startu
+aplikace; nová databáze se naplní výchozím seznamem místností a kategorií.
+
+- **Záloha před migrací:** čeká-li existující databázi jakákoli migrace,
+  `DbInitializer` nejdřív vytvoří konzistentní kopii
+  `nfc-home.db.pred-migraci-<čas UTC>.bak` (přes `VACUUM INTO`, takže
+  zahrne i data z WAL). Starší zálohy časem ručně smaž.
+- **Převzetí starší databáze:** databáze vytvořená dřívější verzí přes
+  `EnsureCreated` nemá historii migrací. Při prvním startu se ověří, že
+  obsahuje všechny tabulky a sloupce výchozího schématu, a zapíše se jako
+  migrace `VychoziSchema`; další migrace pak proběhnou běžně. Pokud
+  schéma nesouhlasí, aplikace se nespustí a databázi nezmění.
+- **Nová migrace** (vývoj): `dotnet ef migrations add Nazev -o Data/Migrations`
+  (nástroj `dotnet tool install --global dotnet-ef`). Změny dat piš do
+  migrace jako SQL a smazání sloupce dej do samostatné migrace — přestavba
+  tabulky v SQLite neběží v transakci.
 
 Po aktualizaci jsou všechny dosavadní položky **soukromé**. Na svém
 přihlášeném telefonu se nic nezmění; u věcí, které mají jít otevřít i
 bez přihlášení, zapni v úpravě položky „veřejná stránka“.
 
 Evidované údaje k položce: kategorie, místnost, výrobce/typ, sériové
-číslo, datum pořízení, cena, délka a konec záruky, příští plánovaný
-servis, poznámka. K položce lze přidávat neomezeně záznamů **servisu/
-oprav** (i STK) a **pojištění** (hodí se pro auto — pojišťovna, číslo
-smlouvy, platnost, roční cena).
+číslo, datum pořízení, cena, délka a konec záruky, poznámka. K položce
+lze přidávat neomezeně záznamů **servisu/oprav** a **pojištění** (hodí
+se pro auto — pojišťovna, číslo smlouvy, platnost, roční cena).
+
+**Plánované termíny** se vedou zvlášť podle druhu — servis, STK, revize,
+výměna filtru, kontrola; od každého druhu má položka nejvýš jeden. Zápis
+servisu s příštím termínem posune jen termín zvoleného druhu, takže
+servis auta nepřepíše STK. Termíny STK a revize hlídá příznak
+„revize / STK“, ostatní příznak „servisní interval“.
+
+Při upgradu se dřívější společné pole „příští servis / STK“ převedlo na
+jeden termín: servis, pokud se sleduje servis; jinak STK (auto) nebo
+revize. U položek, které sledují servis i STK zároveň, druh poznat nešlo
+— termín je převedený jako servis s poznámkou „ověř druh“ a je potřeba
+ho na detailu případně opravit.
 
 U každé položky se navíc zvlášť zaškrtává, co se u ní má sledovat: má
 vlastní NFC kartu, pojištění, obecnou expiraci, servisní interval,
@@ -64,7 +86,7 @@ pojištění.
 
 `Predmet` navíc může mít `Specializace = Auto` (pole SPZ) nebo
 `PlynovyKotel` — mění to jen doporučené sledované vlastnosti a popisky,
-STK/revize a servis se pořád evidují přes běžné servisní záznamy.
+STK/revize a servis se evidují přes servisní záznamy a plánované termíny.
 
 Přehledová stránka (`/`) ukazuje věci, kterým se blíží konec záruky,
 naplánovaný servis/STK, konec pojištění nebo expirace (včetně expirace
