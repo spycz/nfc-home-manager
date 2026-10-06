@@ -57,6 +57,9 @@ public static class DbInitializer
 
         context.Database.Migrate();
 
+        var hranice = DateTime.UtcNow - Services.JednorazovaOperace.Uchovavat;
+        context.ProvedeneOperace.Where(o => o.VytvorenoUtc < hranice).ExecuteDelete();
+
         if (!context.Mistnosti.Any())
         {
             context.Mistnosti.AddRange(

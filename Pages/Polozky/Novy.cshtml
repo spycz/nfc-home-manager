@@ -8,6 +8,7 @@
 
 <div class="card">
     <form method="post">
+        <partial name="_OperaceId" />
         <div asp-validation-summary="All" class="alert alert--error"></div>
         <partial name="_PolozkaFormFields" for="Input" view-data="ViewData" />
 

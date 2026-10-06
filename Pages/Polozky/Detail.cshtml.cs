@@ -38,8 +38,13 @@ public class DetailModel(AppDbContext db) : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostPridatServisAsync(int id, CancellationToken ct)
+    public async Task<IActionResult> OnPostPridatServisAsync(int id, Guid operaceId, CancellationToken ct)
     {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
         if (!await NacistPolozkuAsync(id, ct))
         {
             return NotFound();
@@ -79,8 +84,7 @@ public class DetailModel(AppDbContext db) : PageModel
             NastavitTermin(NovyServis.DalsiTerminTyp, dalsiTermin, null);
         }
 
-        await db.SaveChangesAsync(ct);
-        return Redirect($"/Polozky/Detail?id={id}");
+        return await UlozitJednouAsync(operaceId, id, ct);
     }
 
     public async Task<IActionResult> OnPostSmazatServisAsync(int id, int servisId, CancellationToken ct)
@@ -95,8 +99,13 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
-    public async Task<IActionResult> OnPostPridatPojisteniAsync(int id, CancellationToken ct)
+    public async Task<IActionResult> OnPostPridatPojisteniAsync(int id, Guid operaceId, CancellationToken ct)
     {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
         if (!await NacistPolozkuAsync(id, ct))
         {
             return NotFound();
@@ -120,8 +129,7 @@ public class DetailModel(AppDbContext db) : PageModel
             Poznamka = NovePojisteni.Poznamka
         });
 
-        await db.SaveChangesAsync(ct);
-        return Redirect($"/Polozky/Detail?id={id}");
+        return await UlozitJednouAsync(operaceId, id, ct);
     }
 
     public async Task<IActionResult> OnPostSmazatPojisteniAsync(int id, int pojisteniId, CancellationToken ct)
@@ -139,8 +147,13 @@ public class DetailModel(AppDbContext db) : PageModel
     // Pridani predmetu jako obsahu kontejneru (krabice/mistnost/prvni pomoc).
     // Novy predmet je plnohodnotna Polozka - lze ho pozdeji upravit a doplnit,
     // ci mu i dat vlastni NFC stitek, pokud MaVlastniNfcKartu zaskrtneme.
-    public async Task<IActionResult> OnPostPridatObsahAsync(int id, CancellationToken ct)
+    public async Task<IActionResult> OnPostPridatObsahAsync(int id, Guid operaceId, CancellationToken ct)
     {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
         if (!await NacistPolozkuAsync(id, ct))
         {
             return NotFound();
@@ -167,8 +180,7 @@ public class DetailModel(AppDbContext db) : PageModel
         };
 
         db.Polozky.Add(predmet);
-        await db.SaveChangesAsync(ct);
-        return Redirect($"/Polozky/Detail?id={id}");
+        return await UlozitJednouAsync(operaceId, id, ct);
     }
 
     // Vyjme predmet z kontejneru (nemaze ho, jen odpoji KontejnerId).
@@ -184,8 +196,13 @@ public class DetailModel(AppDbContext db) : PageModel
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
-    public async Task<IActionResult> OnPostPridatLekAsync(int id, CancellationToken ct)
+    public async Task<IActionResult> OnPostPridatLekAsync(int id, Guid operaceId, CancellationToken ct)
     {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
         if (!await NacistPolozkuAsync(id, ct))
         {
             return NotFound();
@@ -220,8 +237,7 @@ public class DetailModel(AppDbContext db) : PageModel
             Poznamka = NovyLek.Poznamka
         });
 
-        await db.SaveChangesAsync(ct);
-        return Redirect($"/Polozky/Detail?id={id}");
+        return await UlozitJednouAsync(operaceId, id, ct);
     }
 
     public async Task<IActionResult> OnPostSmazatLekAsync(int id, int lekId, CancellationToken ct)
@@ -240,8 +256,13 @@ public class DetailModel(AppDbContext db) : PageModel
     // beze nutnosti otevirat cely editacni formular. Povolena je jen zmena o
     // jednu jednotku a jen u vyplneneho mnozstvi; odber pod nulu se odmitne
     // (neoriznout potichu na nulu - chybny odber by zmizel bez stopy).
-    public async Task<IActionResult> OnPostUpravitMnozstviAsync(int id, decimal delta, CancellationToken ct)
+    public async Task<IActionResult> OnPostUpravitMnozstviAsync(int id, decimal delta, Guid operaceId, CancellationToken ct)
     {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
         var polozka = await db.Polozky.FindAsync([id], ct);
         if (polozka is not null)
         {
@@ -252,14 +273,19 @@ public class DetailModel(AppDbContext db) : PageModel
 
             polozka.Mnozstvi = nove;
             polozka.UpravenoUtc = DateTime.UtcNow;
-            await db.SaveChangesAsync(ct);
+            return await UlozitJednouAsync(operaceId, id, ct);
         }
 
         return Redirect($"/Polozky/Detail?id={id}");
     }
 
-    public async Task<IActionResult> OnPostUpravitMnozstviLekuAsync(int id, int lekId, decimal delta, CancellationToken ct)
+    public async Task<IActionResult> OnPostUpravitMnozstviLekuAsync(int id, int lekId, decimal delta, Guid operaceId, CancellationToken ct)
     {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
         var lek = await db.Leky.FirstOrDefaultAsync(l => l.Id == lekId && l.LekarnickaId == id, ct);
         if (lek is not null)
         {
@@ -269,7 +295,7 @@ public class DetailModel(AppDbContext db) : PageModel
             }
 
             lek.Mnozstvi = nove;
-            await db.SaveChangesAsync(ct);
+            return await UlozitJednouAsync(operaceId, id, ct);
         }
 
         return Redirect($"/Polozky/Detail?id={id}");
@@ -375,6 +401,25 @@ public class DetailModel(AppDbContext db) : PageModel
         {
             termin.Poznamka = poznamka;
         }
+    }
+
+    // Opakovane odeslani stejneho formulare (dvojklik, F5, zpet + odeslat)
+    // presmeruje tam, kam vedlo puvodni, a data nezmeni. Viz JednorazovaOperace.
+    private async Task<IActionResult?> OpakovaneOdeslaniAsync(Guid operaceId, CancellationToken ct)
+    {
+        if (operaceId == Guid.Empty)
+        {
+            return BadRequest();
+        }
+
+        return await JednorazovaOperace.PresmerovaniAsync(db, operaceId, ct) is { } drive ? Redirect(drive) : null;
+    }
+
+    private async Task<IActionResult> UlozitJednouAsync(Guid operaceId, int id, CancellationToken ct)
+    {
+        var cil = $"/Polozky/Detail?id={id}";
+        await JednorazovaOperace.UlozitAsync(db, operaceId, cil, ct);
+        return Redirect(cil);
     }
 
     private bool MaChybuBindingu(string klic) => ModelState[klic]?.Errors.Count > 0;
