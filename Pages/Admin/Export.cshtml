@@ -8,10 +8,11 @@
 
 <div class="card">
     <p class="muted">
-        Stáhne obsah databáze (místnosti, kategorie, položky, servisní
-        záznamy, plánované termíny, pojištění, léky) jako jeden JSON soubor.
-        Neobsahuje katalog léků SÚKL a zatím z něj nejde data obnovit; před
-        každou migrací databáze vzniká vedle ní automaticky soubor .bak.
+        Stáhne celý obsah databáze (místnosti, kategorie, položky včetně kódů
+        NFC štítků, servisní záznamy, plánované termíny, pojištění, léky a
+        katalog léků SÚKL) jako jeden JSON soubor. Soubor obsahuje soukromá
+        data domácnosti — ukládej ho mimo server a nesdílej ho.
     </p>
     <a class="btn" href="/Admin/Export?handler=Stahnout">Stáhnout JSON export</a>
+    <a class="btn btn--secondary" href="/Admin/Obnova">Obnovit ze zálohy…</a>
 </div>

@@ -141,6 +141,31 @@ else
     </div>
 }
 
+@if (Model.Polozka.Rezim == NfcRezim.Predmet && Model.Polozka.Specializace == Specializace.Auto && Model.Polozka.Obsah.Count > 0)
+{
+    <div class="card">
+        <h2>První pomoc ve vozidle</h2>
+        <table>
+            <tbody>
+                @foreach (var o in Model.Polozka.Obsah)
+                {
+                    <tr>
+                        <td><a href="/Polozky/Detail?id=@o.Id">@o.Nazev</a>@(o.Aktivni ? "" : " (archivováno)")</td>
+                        <td>
+                            <form method="post" asp-page-handler="OdebratObsah" data-confirm="Odebrat sadu od vozidla? Sada samotná zůstane, jen se odpojí.">
+                                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                <input type="hidden" name="obsahId" value="@o.Id" />
+                                <button class="btn btn--secondary" type="submit">Odebrat</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="muted">Sadu přiřadíš v její úpravě v poli „Umístěno v krabici / u vozidla“.</p>
+    </div>
+}
+
 @if (Model.Polozka.Rezim is NfcRezim.Kontejner or NfcRezim.PrvniPomoc)
 {
     <div class="card">
@@ -272,6 +297,7 @@ else
                                 }
                             </td>
                             <td>
+                                <a class="btn btn--secondary" href="/Polozky/UpravitLek?id=@l.Id">Upravit</a>
                                 <form method="post" asp-page-handler="SmazatLek" data-confirm="Smazat záznam?">
                                     <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                     <input type="hidden" name="lekId" value="@l.Id" />
@@ -303,65 +329,7 @@ else
         <form method="post" asp-page-handler="PridatLek">
             <partial name="_OperaceId" />
             <input type="hidden" name="id" value="@Model.Polozka.Id" />
-            <div class="form-grid">
-                <div class="field">
-                    <label for="NovyLek_Nazev">Název přípravku *</label>
-                    <input id="NovyLek_Nazev" type="text" asp-for="NovyLek.Nazev" />
-                    <span asp-validation-for="NovyLek.Nazev" class="muted" style="color:var(--danger);"></span>
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Ean">Čárový kód (EAN)</label>
-                    <div class="barcode-row">
-                        <input id="NovyLek_Ean" type="text" inputmode="numeric" asp-for="NovyLek.Ean" />
-                        <button type="button" class="btn btn--secondary"
-                                data-barcode-scan
-                                data-ean-target="NovyLek_Ean"
-                                data-name-target="NovyLek_Nazev">Skenovat</button>
-                    </div>
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" asp-for="NovyLek.JeLek" /> je to lék (ne jen prostředek, např. náplast)</label>
-                </div>
-                <div class="field">
-                    <label for="NovyLek_NaCoJe">Na co je</label>
-                    <input id="NovyLek_NaCoJe" type="text" asp-for="NovyLek.NaCoJe" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_ProKoho">Pro koho (v rodině)</label>
-                    <input id="NovyLek_ProKoho" type="text" asp-for="NovyLek.ProKoho" />
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" asp-for="NovyLek.NaPredpis" /> na předpis</label>
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Davkovani">Dávkování</label>
-                    <input id="NovyLek_Davkovani" type="text" asp-for="NovyLek.Davkovani" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Mnozstvi">Množství</label>
-                    <input id="NovyLek_Mnozstvi" type="number" step="0.01" min="0" asp-for="NovyLek.Mnozstvi" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Jednotka">Jednotka</label>
-                    <input id="NovyLek_Jednotka" type="text" asp-for="NovyLek.Jednotka" placeholder="ks, balení…" />
-                </div>
-                <div class="field">
-                    <label for="NovyLek_Expirace">Expirace</label>
-                    <input id="NovyLek_Expirace" type="date" asp-for="NovyLek.Expirace" />
-                </div>
-            </div>
-            <div class="field">
-                <label for="NovyLek_NezadouciUcinky">Nežádoucí účinky</label>
-                <textarea id="NovyLek_NezadouciUcinky" asp-for="NovyLek.NezadouciUcinky"></textarea>
-            </div>
-            <div class="field">
-                <label for="NovyLek_Interakce">S čím se nesmí kombinovat (jiný lék, alkohol…)</label>
-                <textarea id="NovyLek_Interakce" asp-for="NovyLek.Interakce"></textarea>
-            </div>
-            <div class="field">
-                <label for="NovyLek_Poznamka">Poznámka</label>
-                <textarea id="NovyLek_Poznamka" asp-for="NovyLek.Poznamka"></textarea>
-            </div>
+            <partial name="_LekFormFields" for="NovyLek" />
             <button class="btn" type="submit">Přidat</button>
         </form>
     </div>
@@ -485,6 +453,7 @@ else
                             }
                         </td>
                         <td>
+                            <a class="btn btn--secondary" href="/Polozky/UpravitServis?id=@s.Id">Upravit</a>
                             <form method="post" asp-page-handler="SmazatServis" data-confirm="Smazat záznam?">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="servisId" value="@s.Id" />
@@ -501,47 +470,7 @@ else
     <form method="post" asp-page-handler="PridatServis">
         <partial name="_OperaceId" />
         <input type="hidden" name="id" value="@Model.Polozka.Id" />
-        <div class="form-grid">
-            <div class="field">
-                <label for="NovyServis_Datum">Datum *</label>
-                <input id="NovyServis_Datum" type="date" asp-for="NovyServis.Datum" />
-            </div>
-            <div class="field">
-                <label for="NovyServis_Typ">Typ</label>
-                <select id="NovyServis_Typ" asp-for="NovyServis.Typ">
-                    @foreach (var typ in Enum.GetValues<ServisTyp>())
-                    {
-                        <option value="@typ">@typ</option>
-                    }
-                </select>
-            </div>
-            <div class="field">
-                <label for="NovyServis_CenaKc">Cena (Kč)</label>
-                <input id="NovyServis_CenaKc" type="number" step="0.01" min="0" asp-for="NovyServis.CenaKc" />
-            </div>
-            <div class="field">
-                <label for="NovyServis_Provozovna">Provozovna</label>
-                <input id="NovyServis_Provozovna" type="text" asp-for="NovyServis.Provozovna" />
-            </div>
-            <div class="field">
-                <label for="NovyServis_DalsiTerminDo">Příští termín</label>
-                <input id="NovyServis_DalsiTerminDo" type="date" asp-for="NovyServis.DalsiTerminDo" />
-            </div>
-            <div class="field">
-                <label for="NovyServis_DalsiTerminTyp">Druh příštího termínu</label>
-                <select id="NovyServis_DalsiTerminTyp" asp-for="NovyServis.DalsiTerminTyp">
-                    @foreach (var typ in Enum.GetValues<TerminTyp>())
-                    {
-                        <option value="@typ">@Termin.Popis(typ)</option>
-                    }
-                </select>
-            </div>
-        </div>
-        <div class="field">
-            <label for="NovyServis_Popis">Popis *</label>
-            <textarea id="NovyServis_Popis" asp-for="NovyServis.Popis"></textarea>
-            <span asp-validation-for="NovyServis.Popis" class="muted" style="color:var(--danger);"></span>
-        </div>
+        <partial name="_ServisFormFields" for="NovyServis" />
         <button class="btn" type="submit">Přidat záznam</button>
     </form>
 </div>
@@ -579,6 +508,7 @@ else
                         <td>@(i.PlatnostOd?.ToString("d.M.yyyy") ?? "?") – @(i.PlatnostDo?.ToString("d.M.yyyy") ?? "?")</td>
                         <td>@(i.RocniCenaKc?.ToString("N0") is { } r ? $"{r} Kč" : "—")</td>
                         <td>
+                            <a class="btn btn--secondary" href="/Polozky/UpravitPojisteni?id=@i.Id">Upravit</a>
                             <form method="post" asp-page-handler="SmazatPojisteni" data-confirm="Smazat pojištění?">
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="pojisteniId" value="@i.Id" />
@@ -595,37 +525,7 @@ else
     <form method="post" asp-page-handler="PridatPojisteni">
         <partial name="_OperaceId" />
         <input type="hidden" name="id" value="@Model.Polozka.Id" />
-        <div class="form-grid">
-            <div class="field">
-                <label for="NovePojisteni_Pojistovna">Pojišťovna *</label>
-                <input id="NovePojisteni_Pojistovna" type="text" asp-for="NovePojisteni.Pojistovna" />
-                <span asp-validation-for="NovePojisteni.Pojistovna" class="muted" style="color:var(--danger);"></span>
-            </div>
-            <div class="field">
-                <label for="NovePojisteni_Typ">Typ (např. povinné ručení, havarijní)</label>
-                <input id="NovePojisteni_Typ" type="text" asp-for="NovePojisteni.Typ" />
-            </div>
-            <div class="field">
-                <label for="NovePojisteni_CisloSmlouvy">Číslo smlouvy</label>
-                <input id="NovePojisteni_CisloSmlouvy" type="text" asp-for="NovePojisteni.CisloSmlouvy" />
-            </div>
-            <div class="field">
-                <label for="NovePojisteni_RocniCenaKc">Roční cena (Kč)</label>
-                <input id="NovePojisteni_RocniCenaKc" type="number" step="0.01" min="0" asp-for="NovePojisteni.RocniCenaKc" />
-            </div>
-            <div class="field">
-                <label for="NovePojisteni_PlatnostOd">Platnost od</label>
-                <input id="NovePojisteni_PlatnostOd" type="date" asp-for="NovePojisteni.PlatnostOd" />
-            </div>
-            <div class="field">
-                <label for="NovePojisteni_PlatnostDo">Platnost do</label>
-                <input id="NovePojisteni_PlatnostDo" type="date" asp-for="NovePojisteni.PlatnostDo" />
-            </div>
-        </div>
-        <div class="field">
-            <label for="NovePojisteni_Poznamka">Poznámka</label>
-            <textarea id="NovePojisteni_Poznamka" asp-for="NovePojisteni.Poznamka"></textarea>
-        </div>
+        <partial name="_PojisteniFormFields" for="NovePojisteni" />
         <button class="btn" type="submit">Přidat pojištění</button>
     </form>
 </div>

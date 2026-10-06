@@ -48,6 +48,9 @@ Evidované údaje k položce: kategorie, místnost, výrobce/typ, sériové
 číslo, datum pořízení, cena, délka a konec záruky, poznámka. K položce
 lze přidávat neomezeně záznamů **servisu/oprav** a **pojištění** (hodí
 se pro auto — pojišťovna, číslo smlouvy, platnost, roční cena).
+Servisní záznam, pojištění i lék jde dodatečně **upravit** (tlačítko
+„Upravit“ u řádku na detailu). Úprava servisního záznamu mění jen
+historii; plánovaný termín položky se nastavuje zvlášť.
 
 **Plánované termíny** se vedou zvlášť podle druhu — servis, STK, revize,
 výměna filtru, kontrola; od každého druhu má položka nejvýš jeden. Zápis
@@ -66,6 +69,30 @@ vlastní NFC kartu, pojištění, obecnou expiraci, servisní interval,
 revizi/STK. Sekce v administraci i na stránce /p/{kod} se zobrazují jen
 podle toho, co je relevantní — lampa tak není zahlcená poli pro
 pojištění.
+
+### Záloha a obnova (`/Admin/Export`, `/Admin/Obnova`)
+
+Export stáhne celý obsah databáze jako jeden JSON soubor (formát
+verze 2, `Services/Zaloha.cs`): místnosti, kategorie, položky včetně
+kódů NFC štítků, servisní záznamy, plánované termíny, pojištění, léky
+a katalog léků SÚKL. Soubor obsahuje soukromá data — nepatří do
+repozitáře ani na sdílené úložiště.
+
+Obnova má dva kroky. Po nahrání se soubor jen zkontroluje (platný
+JSON, podporovaná verze, jedinečná Id a kódy štítků, existující vazby,
+žádný cyklus krabic) a ukáže se srovnání počtů „teď v databázi“ ×
+„v záloze“. Databáze se změní až po zaškrtnutí potvrzení:
+
+- obnova **nahradí celý obsah** databáze, data se neslučují;
+- běží v jedné transakci — při chybě zůstane databáze v původním stavu;
+- předtím se současný stav uloží vedle databáze do
+  `nfc-home.db.pred-obnovou-<čas UTC>.bak`;
+- Id i kódy štítků se zachovají, takže odkazy na fyzických štítcích
+  fungují dál.
+
+Starší exporty (bez čísla verze, se společným polem „servis / STK“) jde
+obnovit také: pole se převede na plánované termíny stejným pravidlem
+jako při upgradu databáze a katalog léků zůstane prázdný.
 
 ### Co NFC karta reprezentuje (`Rezim`)
 
@@ -151,7 +178,12 @@ jsou gitignored, založ si je podle přiložených `.example` šablon.
 - Vztahy se ověřují na serveru (`Services/PolozkaPravidla.cs`): žádný
   cyklus krabic, obsah jen do krabice / první pomoci, léky jen do
   lékárničky, platné hodnoty výčtů a změna množství jen o ±1 bez
-  podtečení pod nulu.
+  podtečení pod nulu. K **vozidlu** lze přiřadit jen sadu první pomoci
+  (autolékárnička) — zobrazí se pak na detailu vozidla. Do archivované
+  krabice nejde nic nového vložit a ve výběru se nenabízí; věc, která
+  v ní už je, v ní zůstat smí.
+- Nepřihlášený nevidí na stránce věci název nadřazené krabice, pokud je
+  krabice soukromá nebo archivovaná.
 
 ### Množství
 

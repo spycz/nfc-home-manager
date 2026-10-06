@@ -94,10 +94,7 @@ public class NovyModel(AppDbContext db) : PageModel
     {
         ViewData["VsechnyKategorie"] = await db.Kategorie.OrderBy(k => k.Nazev).ToListAsync(ct);
         ViewData["VsechnyMistnosti"] = await db.Mistnosti.OrderBy(m => m.Nazev).ToListAsync(ct);
-        ViewData["VsechnyKontejnery"] = await db.Polozky
-            .Where(p => p.Rezim == NfcRezim.Kontejner || p.Rezim == NfcRezim.PrvniPomoc)
-            .OrderBy(p => p.Nazev)
-            .ToListAsync(ct);
+        ViewData["VsechnyKontejnery"] = await PolozkaPravidla.NabizeneKontejneryAsync(db, null, null, ct);
     }
 }
 

@@ -1,0 +1,22 @@
+@page
+@model NfcHomeManager.Pages.Polozky.UpravitServisModel
+@{
+    ViewData["Title"] = "Upravit servisní záznam";
+}
+
+<h1>Upravit servisní záznam</h1>
+<p class="muted">Položka: <a href="/Polozky/Detail?id=@Model.Polozka.Id">@Model.Polozka.Nazev</a></p>
+
+<div class="card">
+    <form method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div asp-validation-summary="All" class="alert alert--error"></div>
+        <partial name="_ServisFormFields" for="Input" />
+        <p class="muted">Úprava změní jen tento záznam v historii. Plánovaný termín položky se tím nemění — nastav ho na detailu v části „Plánované termíny“.</p>
+
+        <div class="actions">
+            <button class="btn" type="submit">Uložit</button>
+            <a class="btn btn--secondary" href="/Polozky/Detail?id=@Model.Polozka.Id">Zrušit</a>
+        </div>
+    </form>
+</div>

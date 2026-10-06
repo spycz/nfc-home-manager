@@ -45,7 +45,7 @@ public static class DbInitializer
         // kopii (VACUUM INTO pocita i s daty jeste necheckpointovanymi z WAL).
         if (TabulkaExistuje(context, "Polozky") && (staraDatabaze || cekajiciMigrace.Count > 0))
         {
-            var zaloha = Zalohovat(context);
+            var zaloha = Zalohovat(context, "pred-migraci");
             logger.LogInformation("Záloha databáze před migrací: {Zaloha}", zaloha);
         }
 
@@ -119,10 +119,19 @@ public static class DbInitializer
         context.Database.ExecuteSqlRaw(historie.GetInsertScript(new HistoryRow(VychoziMigrace, ProductInfo.GetVersion())));
     }
 
-    private static string Zalohovat(AppDbContext context)
+    // Konzistentni kopie databaze vedle puvodniho souboru; vraci jeji cestu.
+    public static string Zalohovat(AppDbContext context, string duvod)
     {
         var zdroj = new SqliteConnectionStringBuilder(context.Database.GetConnectionString()).DataSource;
-        var cesta = Path.GetFullPath($"{zdroj}.pred-migraci-{DateTime.UtcNow:yyyyMMdd-HHmmss}.bak");
+        var zaklad = Path.GetFullPath($"{zdroj}.{duvod}-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
+        var cesta = zaklad + ".bak";
+
+        // VACUUM INTO existujici soubor neprepise - dve kopie ve stejne vterine.
+        for (var poradi = 2; File.Exists(cesta); poradi++)
+        {
+            cesta = $"{zaklad}-{poradi}.bak";
+        }
+
         context.Database.ExecuteSql($"VACUUM INTO {cesta}");
         return cesta;
     }

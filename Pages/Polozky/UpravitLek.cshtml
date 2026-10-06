@@ -1,0 +1,26 @@
+@page
+@model NfcHomeManager.Pages.Polozky.UpravitLekModel
+@{
+    ViewData["Title"] = "Upravit lék / prostředek";
+}
+
+<h1>Upravit lék / prostředek</h1>
+<p class="muted">Lékárnička: <a href="/Polozky/Detail?id=@Model.Lekarnicka.Id">@Model.Lekarnicka.Nazev</a></p>
+
+<div class="card">
+    <form method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div asp-validation-summary="All" class="alert alert--error"></div>
+        <partial name="_LekFormFields" for="Input" />
+
+        <div class="actions">
+            <button class="btn" type="submit">Uložit</button>
+            <a class="btn btn--secondary" href="/Polozky/Detail?id=@Model.Lekarnicka.Id">Zrušit</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="/js/vendor/zxing-browser.min.js" defer></script>
+    <script src="/js/barcode.js" defer></script>
+}

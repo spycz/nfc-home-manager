@@ -57,12 +57,12 @@
         <input id="Input_Spz" type="text" asp-for="Spz" />
     </div>
     <div class="field">
-        <label for="Input_KontejnerId">Umístěno v krabici</label>
+        <label for="Input_KontejnerId">Umístěno v krabici / u vozidla</label>
         <select id="Input_KontejnerId" asp-for="KontejnerId">
             <option value="">— není v krabici —</option>
             @foreach (var k in vsechnyKontejnery)
             {
-                <option value="@k.Id">@k.Nazev</option>
+                <option value="@k.Id">@k.Nazev@(k.Rezim == NfcRezim.Predmet ? " (vozidlo – jen pro sadu první pomoci)" : "")@(k.Aktivni ? "" : " (archivováno)")</option>
             }
         </select>
         <span asp-validation-for="KontejnerId" class="muted" style="color:var(--danger);"></span>

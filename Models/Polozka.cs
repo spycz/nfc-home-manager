@@ -75,6 +75,7 @@ public class Polozka
     // pomoc jsou vzdy soukrome bez ohledu na tento priznak.
     public bool Verejna { get; set; }
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public bool JeVerejnaStranka => Verejna && Rezim is not (NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc);
     public bool SledovatPojisteni { get; set; }
     public bool SledovatExpiraci { get; set; }

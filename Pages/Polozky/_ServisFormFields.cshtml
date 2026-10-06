@@ -1,0 +1,45 @@
+@model NfcHomeManager.Pages.Polozky.NovyServisInput
+@using NfcHomeManager.Models
+@* Pole formulare sdilena pridanim na detailu polozky a strankou pro upravu zaznamu. *@
+
+<div class="form-grid">
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Datum)">Datum *</label>
+        <input id="@Html.IdFor(m => m.Datum)" type="date" asp-for="Datum" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Typ)">Typ</label>
+        <select id="@Html.IdFor(m => m.Typ)" asp-for="Typ">
+            @foreach (var typ in Enum.GetValues<ServisTyp>())
+            {
+                <option value="@typ">@typ</option>
+            }
+        </select>
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.CenaKc)">Cena (Kč)</label>
+        <input id="@Html.IdFor(m => m.CenaKc)" type="number" step="0.01" min="0" asp-for="CenaKc" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Provozovna)">Provozovna</label>
+        <input id="@Html.IdFor(m => m.Provozovna)" type="text" asp-for="Provozovna" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.DalsiTerminDo)">Příští termín</label>
+        <input id="@Html.IdFor(m => m.DalsiTerminDo)" type="date" asp-for="DalsiTerminDo" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.DalsiTerminTyp)">Druh příštího termínu</label>
+        <select id="@Html.IdFor(m => m.DalsiTerminTyp)" asp-for="DalsiTerminTyp">
+            @foreach (var typ in Enum.GetValues<TerminTyp>())
+            {
+                <option value="@typ">@Termin.Popis(typ)</option>
+            }
+        </select>
+    </div>
+</div>
+<div class="field">
+    <label for="@Html.IdFor(m => m.Popis)">Popis *</label>
+    <textarea id="@Html.IdFor(m => m.Popis)" asp-for="Popis"></textarea>
+    <span asp-validation-for="Popis" class="muted" style="color:var(--danger);"></span>
+</div>

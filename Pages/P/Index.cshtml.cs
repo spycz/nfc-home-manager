@@ -60,7 +60,8 @@ public class IndexModel(AppDbContext db) : PageModel
             ViditelnyObsah = Polozka.Obsah.Where(o => o.JeVerejnaStranka).ToList();
             SkrytychPolozek = Polozka.Obsah.Count - ViditelnyObsah.Count;
 
-            if (Polozka.Kontejner is { JeVerejnaStranka: false })
+            // Archivovany rodic sam vraci 404, proto se nesmi prozradit ani zde.
+            if (Polozka.Kontejner is { } rodic && !(rodic.JeVerejnaStranka && rodic.Aktivni))
             {
                 Polozka.Kontejner = null;
             }

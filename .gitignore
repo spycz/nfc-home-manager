@@ -17,7 +17,7 @@ appsettings.Development.json
 nfc-home.db
 nfc-home.db-shm
 nfc-home.db-wal
-nfc-home.db.pred-migraci-*.bak
+nfc-home.db.pred-*.bak
 App_Data/
 
 .DS_Store

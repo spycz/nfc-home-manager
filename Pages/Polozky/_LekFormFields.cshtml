@@ -1,0 +1,63 @@
+@model NfcHomeManager.Pages.Polozky.NovyLekInput
+@using NfcHomeManager.Models
+@* Pole formulare sdilena pridanim na detailu polozky a strankou pro upravu zaznamu. *@
+
+<div class="form-grid">
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Nazev)">Název přípravku *</label>
+        <input id="@Html.IdFor(m => m.Nazev)" type="text" asp-for="Nazev" />
+        <span asp-validation-for="Nazev" class="muted" style="color:var(--danger);"></span>
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Ean)">Čárový kód (EAN)</label>
+        <div class="barcode-row">
+            <input id="@Html.IdFor(m => m.Ean)" type="text" inputmode="numeric" asp-for="Ean" />
+            <button type="button" class="btn btn--secondary"
+                    data-barcode-scan
+                    data-ean-target="@Html.IdFor(m => m.Ean)"
+                    data-name-target="@Html.IdFor(m => m.Nazev)">Skenovat</button>
+        </div>
+    </div>
+    <div class="field">
+        <label><input type="checkbox" asp-for="JeLek" /> je to lék (ne jen prostředek, např. náplast)</label>
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.NaCoJe)">Na co je</label>
+        <input id="@Html.IdFor(m => m.NaCoJe)" type="text" asp-for="NaCoJe" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.ProKoho)">Pro koho (v rodině)</label>
+        <input id="@Html.IdFor(m => m.ProKoho)" type="text" asp-for="ProKoho" />
+    </div>
+    <div class="field">
+        <label><input type="checkbox" asp-for="NaPredpis" /> na předpis</label>
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Davkovani)">Dávkování</label>
+        <input id="@Html.IdFor(m => m.Davkovani)" type="text" asp-for="Davkovani" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Mnozstvi)">Množství</label>
+        <input id="@Html.IdFor(m => m.Mnozstvi)" type="number" step="0.01" min="0" asp-for="Mnozstvi" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Jednotka)">Jednotka</label>
+        <input id="@Html.IdFor(m => m.Jednotka)" type="text" asp-for="Jednotka" placeholder="ks, balení…" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Expirace)">Expirace</label>
+        <input id="@Html.IdFor(m => m.Expirace)" type="date" asp-for="Expirace" />
+    </div>
+</div>
+<div class="field">
+    <label for="@Html.IdFor(m => m.NezadouciUcinky)">Nežádoucí účinky</label>
+    <textarea id="@Html.IdFor(m => m.NezadouciUcinky)" asp-for="NezadouciUcinky"></textarea>
+</div>
+<div class="field">
+    <label for="@Html.IdFor(m => m.Interakce)">S čím se nesmí kombinovat (jiný lék, alkohol…)</label>
+    <textarea id="@Html.IdFor(m => m.Interakce)" asp-for="Interakce"></textarea>
+</div>
+<div class="field">
+    <label for="@Html.IdFor(m => m.Poznamka)">Poznámka</label>
+    <textarea id="@Html.IdFor(m => m.Poznamka)" asp-for="Poznamka"></textarea>
+</div>

@@ -1,0 +1,85 @@
+@page
+@model NfcHomeManager.Pages.Admin.ObnovaModel
+@{
+    ViewData["Title"] = "Obnova ze zálohy";
+}
+
+<h1>Obnova ze zálohy</h1>
+
+@if (!string.IsNullOrEmpty(Model.Vysledek))
+{
+    <div class="alert" style="background:#dcfce7;color:var(--ok);">@Model.Vysledek</div>
+}
+
+@if (Model.Chyby.Count > 0)
+{
+    <div class="alert alert--error">
+        <ul>
+            @foreach (var chyba in Model.Chyby)
+            {
+                <li>@chyba</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (Model.Nahrana is { } nahrana && Model.Soucasna is { } soucasna)
+{
+    <div class="card">
+        <h2>Náhled před obnovou</h2>
+        <p>
+            Záloha z <strong>@nahrana.ExportovanoUtc.ToLocalTime().ToString("d.M.yyyy H:mm")</strong>
+            (formát verze @nahrana.Verze). Soubor prošel kontrolou.
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Teď v databázi</th>
+                    <th>V záloze</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (ted, zaloha) in soucasna.Pocty().Zip(nahrana.Pocty()))
+                {
+                    <tr>
+                        <td>@ted.Nazev</td>
+                        <td>@ted.Pocet</td>
+                        <td>@zaloha.Pocet</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (nahrana.Verze < NfcHomeManager.Services.Zaloha.AktualniVerze)
+        {
+            <p class="muted">Záloha je ve starším formátu: neobsahuje katalog léků SÚKL (po obnově bude prázdný) a společné pole „servis / STK“ se převede na plánované termíny.</p>
+        }
+
+        <form method="post" asp-page-handler="Obnovit" data-confirm="Opravdu nahradit celý obsah databáze daty ze zálohy?">
+            <input type="hidden" name="nahraniId" value="@Model.NahraniId" />
+            <div class="field">
+                <label><input type="checkbox" name="potvrzeno" value="true" required /> Rozumím, že se <strong>celý současný obsah databáze nahradí</strong> daty ze zálohy.</label>
+            </div>
+            <button class="btn" type="submit">Obnovit databázi</button>
+            <a class="btn btn--secondary" href="/Admin/Obnova">Zrušit</a>
+        </form>
+        <p class="muted">Před obnovou se současný stav uloží na serveru vedle databáze do souboru <code>.pred-obnovou-….bak</code>. Kódy NFC štítků se obnoví ze zálohy, takže odkazy na štítcích fungují dál.</p>
+    </div>
+}
+else
+{
+    <div class="card">
+        <p class="muted">
+            Nahraj JSON soubor vytvořený na stránce <a href="/Admin/Export">Export dat</a>.
+            Nejdřív se jen zkontroluje a ukáže se náhled; databáze se změní až po potvrzení.
+            Obnova nahradí celý obsah databáze, data se neslučují.
+        </p>
+        <form method="post" asp-page-handler="Nahrat" enctype="multipart/form-data">
+            <div class="field">
+                <label for="Soubor">Soubor zálohy (JSON)</label>
+                <input id="Soubor" type="file" name="Soubor" accept=".json,application/json" required />
+            </div>
+            <button class="btn" type="submit">Nahrát a zkontrolovat</button>
+        </form>
+    </div>
+}

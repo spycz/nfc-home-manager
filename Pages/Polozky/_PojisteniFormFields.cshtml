@@ -1,0 +1,35 @@
+@model NfcHomeManager.Pages.Polozky.NovePojisteniInput
+@using NfcHomeManager.Models
+@* Pole formulare sdilena pridanim na detailu polozky a strankou pro upravu zaznamu. *@
+
+<div class="form-grid">
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Pojistovna)">Pojišťovna *</label>
+        <input id="@Html.IdFor(m => m.Pojistovna)" type="text" asp-for="Pojistovna" />
+        <span asp-validation-for="Pojistovna" class="muted" style="color:var(--danger);"></span>
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Typ)">Typ (např. povinné ručení, havarijní)</label>
+        <input id="@Html.IdFor(m => m.Typ)" type="text" asp-for="Typ" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.CisloSmlouvy)">Číslo smlouvy</label>
+        <input id="@Html.IdFor(m => m.CisloSmlouvy)" type="text" asp-for="CisloSmlouvy" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.RocniCenaKc)">Roční cena (Kč)</label>
+        <input id="@Html.IdFor(m => m.RocniCenaKc)" type="number" step="0.01" min="0" asp-for="RocniCenaKc" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.PlatnostOd)">Platnost od</label>
+        <input id="@Html.IdFor(m => m.PlatnostOd)" type="date" asp-for="PlatnostOd" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.PlatnostDo)">Platnost do</label>
+        <input id="@Html.IdFor(m => m.PlatnostDo)" type="date" asp-for="PlatnostDo" />
+    </div>
+</div>
+<div class="field">
+    <label for="@Html.IdFor(m => m.Poznamka)">Poznámka</label>
+    <textarea id="@Html.IdFor(m => m.Poznamka)" asp-for="Poznamka"></textarea>
+</div>

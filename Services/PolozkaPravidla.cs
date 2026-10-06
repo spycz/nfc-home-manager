@@ -13,6 +13,27 @@ public static class PolozkaPravidla
     // Rezimy, ktere smi obsahovat jine polozky (Polozka.Obsah).
     public static bool MuzeMitObsah(NfcRezim rezim) => rezim is NfcRezim.Kontejner or NfcRezim.PrvniPomoc;
 
+    // Vozidlo neni obecny kontejner, ale lze k nemu priradit sadu prvni
+    // pomoci (autolekarnicka) - vazba pres stejne pole KontejnerId.
+    public static bool JeVozidlo(NfcRezim rezim, Specializace specializace) =>
+        rezim == NfcRezim.Predmet && specializace == Specializace.Auto;
+
+    // Smi byt polozka daneho rezimu ulozena v/u rodice daneho druhu?
+    public static bool SmiObsahovat(NfcRezim rodicRezim, Specializace rodicSpecializace, NfcRezim diteRezim) =>
+        MuzeMitObsah(rodicRezim) || (JeVozidlo(rodicRezim, rodicSpecializace) && diteRezim == NfcRezim.PrvniPomoc);
+
+    // Polozky nabizene ve vyberu "umisteno v": aktivni krabice, sady prvni
+    // pomoci a vozidla. Archivovane se nenabizeji, krome te, ve ktere polozka
+    // prave je (ponechatId) - jinak by ji formular pri ulozeni potichu vyjmul.
+    public static Task<List<Polozka>> NabizeneKontejneryAsync(AppDbContext db, int? vlastniId, int? ponechatId, CancellationToken ct) =>
+        db.Polozky.AsNoTracking()
+            .Where(p => p.Id != vlastniId)
+            .Where(p => p.Rezim == NfcRezim.Kontejner || p.Rezim == NfcRezim.PrvniPomoc ||
+                        (p.Rezim == NfcRezim.Predmet && p.Specializace == Specializace.Auto))
+            .Where(p => p.Aktivni || p.Id == ponechatId)
+            .OrderBy(p => p.Nazev)
+            .ToListAsync(ct);
+
     // Rezimy, ke kterym lze pridavat leky/prostredky (Polozka.Leky).
     public static bool MuzeMitLeky(NfcRezim rezim) => rezim is NfcRezim.Lekarnicka;
 
@@ -38,7 +59,7 @@ public static class PolozkaPravidla
 
         if (input.KontejnerId is { } kontejnerId)
         {
-            var chyba = await OveritKontejnerAsync(db, kontejnerId, vlastniId, ct);
+            var chyba = await OveritKontejnerAsync(db, kontejnerId, vlastniId, input.Rezim, ct);
             if (chyba is not null)
             {
                 modelState.AddModelError("Input.KontejnerId", chyba);
@@ -47,9 +68,10 @@ public static class PolozkaPravidla
 
         if (vlastniId is { } id)
         {
-            if (!MuzeMitObsah(input.Rezim) && await db.Polozky.AnyAsync(p => p.KontejnerId == id, ct))
+            var rezimyObsahu = await db.Polozky.Where(p => p.KontejnerId == id).Select(p => p.Rezim).Distinct().ToListAsync(ct);
+            if (rezimyObsahu.Any(dite => !SmiObsahovat(input.Rezim, input.Specializace, dite)))
             {
-                modelState.AddModelError("Input.Rezim", "Položka má obsah. Nejdřív ho vyjmi nebo přesuň, pak změň druh.");
+                modelState.AddModelError("Input.Rezim", "Položka má obsah. Nejdřív ho vyjmi nebo přesuň, pak změň druh nebo specializaci.");
             }
 
             if (!MuzeMitLeky(input.Rezim) && await db.Leky.AnyAsync(l => l.LekarnickaId == id, ct))
@@ -60,7 +82,7 @@ public static class PolozkaPravidla
     }
 
     // Vrati popis chyby, nebo null, kdyz smi byt polozka vlozena do kontejneru.
-    private static async Task<string?> OveritKontejnerAsync(AppDbContext db, int kontejnerId, int? vlastniId, CancellationToken ct)
+    private static async Task<string?> OveritKontejnerAsync(AppDbContext db, int kontejnerId, int? vlastniId, NfcRezim vlastniRezim, CancellationToken ct)
     {
         if (kontejnerId == vlastniId)
         {
@@ -69,7 +91,7 @@ public static class PolozkaPravidla
 
         var kontejner = await db.Polozky.AsNoTracking()
             .Where(p => p.Id == kontejnerId)
-            .Select(p => new { p.Rezim, p.Aktivni })
+            .Select(p => new { p.Rezim, p.Specializace, p.Aktivni })
             .FirstOrDefaultAsync(ct);
 
         if (kontejner is null)
@@ -77,14 +99,23 @@ public static class PolozkaPravidla
             return "Vybraná krabice neexistuje.";
         }
 
-        if (!MuzeMitObsah(kontejner.Rezim))
+        if (!SmiObsahovat(kontejner.Rezim, kontejner.Specializace, vlastniRezim))
         {
-            return "Do vybrané položky nelze vkládat obsah.";
+            return JeVozidlo(kontejner.Rezim, kontejner.Specializace)
+                ? "K vozidlu lze přiřadit jen sadu první pomoci."
+                : "Do vybrané položky nelze vkládat obsah.";
         }
 
+        // Do archivovane krabice nelze nic nove vlozit. Polozka, ktera v ni uz
+        // je, v ni smi zustat - jinak by nesla ulozit ani nesouvisejici uprava.
         if (!kontejner.Aktivni)
         {
-            return "Vybraná krabice je archivovaná.";
+            var uzVNi = vlastniId is { } id &&
+                await db.Polozky.AnyAsync(p => p.Id == id && p.KontejnerId == kontejnerId, ct);
+            if (!uzVNi)
+            {
+                return "Vybraná krabice je archivovaná.";
+            }
         }
 
         if (vlastniId is null)
