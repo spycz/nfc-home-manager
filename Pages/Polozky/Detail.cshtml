@@ -60,11 +60,13 @@
                         <div class="qty-row">
                             <span>@Model.Polozka.Mnozstvi.Value.ToString("0.##") @Model.Polozka.Jednotka</span>
                             <form method="post" asp-page-handler="UpravitMnozstvi">
+                                <partial name="_OperaceId" />
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="delta" value="-1" />
                                 <button class="btn btn--secondary" type="submit" disabled="@(Model.Polozka.Mnozstvi <= 0)">−1</button>
                             </form>
                             <form method="post" asp-page-handler="UpravitMnozstvi">
+                                <partial name="_OperaceId" />
                                 <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                 <input type="hidden" name="delta" value="1" />
                                 <button class="btn btn--secondary" type="submit">+1</button>
@@ -179,6 +181,7 @@ else
 
         <h3>Přidat předmět do obsahu</h3>
         <form method="post" asp-page-handler="PridatObsah">
+            <partial name="_OperaceId" />
             <input type="hidden" name="id" value="@Model.Polozka.Id" />
             <div class="form-grid">
                 <div class="field">
@@ -238,12 +241,14 @@ else
                                     <div class="qty-row">
                                         <span>@l.Mnozstvi.Value.ToString("0.##") @l.Jednotka</span>
                                         <form method="post" asp-page-handler="UpravitMnozstviLeku">
+                                            <partial name="_OperaceId" />
                                             <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                             <input type="hidden" name="lekId" value="@l.Id" />
                                             <input type="hidden" name="delta" value="-1" />
                                             <button class="btn btn--secondary" type="submit" disabled="@(l.Mnozstvi <= 0)">−1</button>
                                         </form>
                                         <form method="post" asp-page-handler="UpravitMnozstviLeku">
+                                            <partial name="_OperaceId" />
                                             <input type="hidden" name="id" value="@Model.Polozka.Id" />
                                             <input type="hidden" name="lekId" value="@l.Id" />
                                             <input type="hidden" name="delta" value="1" />
@@ -296,6 +301,7 @@ else
 
         <h3>Přidat lék / prostředek</h3>
         <form method="post" asp-page-handler="PridatLek">
+            <partial name="_OperaceId" />
             <input type="hidden" name="id" value="@Model.Polozka.Id" />
             <div class="form-grid">
                 <div class="field">
@@ -493,6 +499,7 @@ else
 
     <h3>Přidat záznam</h3>
     <form method="post" asp-page-handler="PridatServis">
+        <partial name="_OperaceId" />
         <input type="hidden" name="id" value="@Model.Polozka.Id" />
         <div class="form-grid">
             <div class="field">
@@ -586,6 +593,7 @@ else
 
     <h3>Přidat pojištění</h3>
     <form method="post" asp-page-handler="PridatPojisteni">
+        <partial name="_OperaceId" />
         <input type="hidden" name="id" value="@Model.Polozka.Id" />
         <div class="form-grid">
             <div class="field">

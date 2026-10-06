@@ -120,7 +120,7 @@ jsou gitignored, založ si je podle přiložených `.example` šablon.
 - Bezpečnostní hlavičky: CSP (žádné inline skripty — veškeré JS je v
   `wwwroot/js/site.js`, potvrzovací dialogy a kopírování jdou přes
   `data-confirm`/`data-copy-target` atributy), HSTS, `X-Frame-Options`,
-  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`,
+  `X-Content-Type-Options`, `Referrer-Policy` (`no-referrer`), `Permissions-Policy`,
   `Cross-Origin-Opener-Policy`.
 - `noindex` meta tag na všech stránkách + `robots.txt` zakazující
   procházení — inventář domácnosti (a hlavně lékárnička) se nemá dostat
@@ -138,6 +138,16 @@ jsou gitignored, založ si je podle přiložených `.example` šablon.
 - Neznámý kód i archivovaná položka vrací nepřihlášenému HTTP 404 se
   stejnou hláškou, takže z odpovědi nejde poznat, které kódy existují.
   Implementováno v `Pages/P/Index.cshtml.cs`.
+- **Opakované odeslání nemění data podruhé.** Formuláře s nevratnou
+  akcí (±1 množství, přidání servisu, pojištění, léku nebo obsahu,
+  založení položky) nesou náhodné `operaceId`. Server ho uloží spolu se
+  změnou v jedné transakci; dvojklik, F5, Zpět + odeslat nebo souběžný
+  požadavek se stejným ID jen přesměruje tam, kam vedla původní operace
+  (`Services/JednorazovaOperace.cs`). Záznamy se mažou po 30 dnech.
+  Prohlížeč navíc po odeslání zablokuje tlačítka formuláře.
+- Všechny odpovědi kromě statických souborů mají `Cache-Control: no-store`,
+  aby soukromé stránky (hlavně lékárnička) nezůstaly v mezipaměti
+  prohlížeče; `Referrer-Policy: no-referrer` nepouští kód položky dál.
 - Vztahy se ověřují na serveru (`Services/PolozkaPravidla.cs`): žádný
   cyklus krabic, obsah jen do krabice / první pomoci, léky jen do
   lékárničky, platné hodnoty výčtů a změna množství jen o ±1 bez

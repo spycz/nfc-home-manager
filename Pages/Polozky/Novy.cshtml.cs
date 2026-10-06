@@ -20,8 +20,19 @@ public class NovyModel(AppDbContext db) : PageModel
         await NacistCiselnikyAsync(ct);
     }
 
-    public async Task<IActionResult> OnPostAsync(CancellationToken ct)
+    public async Task<IActionResult> OnPostAsync(Guid operaceId, CancellationToken ct)
     {
+        // Dvojklik na Ulozit nebo opakovane odeslani nesmi zalozit polozku dvakrat.
+        if (operaceId == Guid.Empty)
+        {
+            return BadRequest();
+        }
+
+        if (await JednorazovaOperace.PresmerovaniAsync(db, operaceId, ct) is { } drive)
+        {
+            return Redirect(drive);
+        }
+
         await NacistCiselnikyAsync(ct);
         await PolozkaPravidla.ValidovatAsync(db, Input, null, ModelState, ct);
 
@@ -62,10 +73,21 @@ public class NovyModel(AppDbContext db) : PageModel
 
         polozka.PrepocitatZaruku();
 
+        // Cilova adresa (detail) je znama az po ulozeni polozky, proto se
+        // polozka i zaznam operace zapisou v jedne transakci.
+        await using var transakce = await db.Database.BeginTransactionAsync(ct);
         db.Polozky.Add(polozka);
         await db.SaveChangesAsync(ct);
 
-        return Redirect($"/Polozky/Detail?id={polozka.Id}");
+        var cil = $"/Polozky/Detail?id={polozka.Id}";
+        if (!await JednorazovaOperace.UlozitAsync(db, operaceId, cil, ct))
+        {
+            await transakce.RollbackAsync(ct);
+            return Redirect(await JednorazovaOperace.PresmerovaniAsync(db, operaceId, ct) ?? "/Polozky");
+        }
+
+        await transakce.CommitAsync(ct);
+        return Redirect(cil);
     }
 
     private async Task NacistCiselnikyAsync(CancellationToken ct)

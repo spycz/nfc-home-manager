@@ -134,7 +134,8 @@ public class Program
         {
             var headers = context.Response.Headers;
             headers[HeaderNames.XContentTypeOptions] = "nosniff";
-            headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            // Odkazy z NFC stitku nesou kod polozky - neposilat je dal v Referer.
+            headers["Referrer-Policy"] = "no-referrer";
             headers["X-Frame-Options"] = "SAMEORIGIN";
             headers["Permissions-Policy"] = "geolocation=(), camera=(self), microphone=(), payment=(), usb=()";
             headers["Cross-Origin-Opener-Policy"] = "same-origin";
@@ -147,6 +148,16 @@ public class Program
         });
 
         app.UseStaticFiles();
+
+        // Staticke soubory obslouzi UseStaticFiles vyse a sem nedojdou. Vsechno
+        // ostatni (stranky polozek, lekarnicka, export, API) obsahuje soukroma
+        // data, ktera nemaji zustat v mezipameti prohlizece ani proxy - napr. na
+        // sdilenem telefonu po odhlaseni.
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers.CacheControl = "no-store";
+            await next();
+        });
         app.UseRouting();
 
         app.UseRateLimiter();

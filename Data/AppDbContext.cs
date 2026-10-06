@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Polozka> Polozky => Set<Polozka>();
     public DbSet<ServisniZaznam> ServisniZaznamy => Set<ServisniZaznam>();
     public DbSet<Termin> Terminy => Set<Termin>();
+    public DbSet<ProvedenaOperace> ProvedeneOperace => Set<ProvedenaOperace>();
     public DbSet<Pojisteni> Pojisteni => Set<Pojisteni>();
     public DbSet<Lek> Leky => Set<Lek>();
     public DbSet<LekovyKatalog> LekovyKatalog => Set<LekovyKatalog>();
@@ -74,6 +75,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(p => p.Terminy)
                 .HasForeignKey(t => t.PolozkaId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProvedenaOperace>(entity =>
+        {
+            entity.Property(o => o.Id).ValueGeneratedNever();
+            entity.HasIndex(o => o.VytvorenoUtc);
         });
 
         modelBuilder.Entity<LekovyKatalog>(entity =>
