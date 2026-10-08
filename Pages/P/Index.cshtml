@@ -142,6 +142,38 @@ else
             }
         }
 
+        @if (p.Rezim == NfcRezim.PrvniPomoc && p.Leky.Count > 0)
+        {
+            var stavSady = NfcHomeManager.Services.StavSady.Vyhodnotit(p.Leky, dnes);
+            var dalsiKontrola = p.Terminy.FirstOrDefault(t => t.Typ == TerminTyp.Kontrola);
+            <h3>Stav sady</h3>
+            <p>
+                <span class="badge @(stavSady.Uplna ? "badge--ok" : "badge--overdue")">@(stavSady.Uplna ? "Sada je úplná" : "Sada není úplná")</span>
+                @if (dalsiKontrola is not null)
+                {
+                    <span class="muted">· kontrola do @dalsiKontrola.DatumDo.ToString("d.M.yyyy")</span>
+                }
+            </p>
+            @if (stavSady.Chybi.Count > 0)
+            {
+                <p><strong>Chybí:</strong> @string.Join(", ", stavSady.Chybi.Select(l => l.Nazev))</p>
+            }
+            @if (stavSady.Prosle.Count > 0)
+            {
+                <p><strong>Prošlé:</strong> @string.Join(", ", stavSady.Prosle.Select(l => l.Nazev))</p>
+            }
+            @if (stavSady.BrzyExpiruje.Count > 0)
+            {
+                <p><strong>Brzy expiruje:</strong> @string.Join(", ", stavSady.BrzyExpiruje.Select(l => l.Nazev))</p>
+            }
+            @if (p.Aktivni)
+            {
+                <div class="actions">
+                    <a class="btn" href="/Polozky/Kontrola?id=@p.Id">Zkontrolovat sadu</a>
+                </div>
+            }
+        }
+
         @if (p.Rezim == NfcRezim.Lekarnicka)
         {
             <h3>Léky a prostředky</h3>

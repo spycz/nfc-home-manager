@@ -37,8 +37,10 @@ public class Termin
     };
 
     // Ktery priznak Polozka.Sledovat* rozhoduje o pripominkach tohoto druhu.
+    // Kontrola sady prvni pomoci se hlida vzdy - je to hlavni ucel sady.
     public static bool JeSledovany(TerminTyp typ, Polozka polozka) => typ switch
     {
+        TerminTyp.Kontrola when polozka.Rezim == NfcRezim.PrvniPomoc => true,
         TerminTyp.Stk or TerminTyp.Revize => polozka.SledovatRevizi,
         _ => polozka.SledovatServis
     };

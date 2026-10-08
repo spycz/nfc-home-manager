@@ -106,8 +106,36 @@ jako při upgradu databáze a katalog léků zůstane prázdný.
   na co je, pro koho v rodině, je-li na předpis, dávkování, nežádoucí
   účinky, s čím se nesmí kombinovat, a příznak lék/prostředek (náplast
   není lék, ale patří tam taky).
-- **První pomoc** — samostatný druh krabice, odděleně od domácí
-  lékárničky, pro obsah spojený jen s první pomocí.
+- **První pomoc** — sada první pomoci, zvláštní druh oddělený od domácí
+  lékárničky. Má vlastní vybavení s cílovou zásobou a průvodce kontrolou
+  (viz níže); vedle toho může jako krabice obsahovat i jiné předměty a
+  jde přiřadit k vozidlu.
+
+### Sada první pomoci a průvodce kontrolou
+
+Vybavení sady jsou záznamy `Lek` se třemi poli navíc: **cílová zásoba**
+(kolik má v sadě být; prázdné = volitelná položka), **skupina** (Rány,
+Obvazy, Pomůcky, Přípravky…) a příznak **sterilní – kontrolovat obal**.
+
+- **Šablony** (`Services/SablonySady.cs`): prázdnou sadu jde na detailu
+  naplnit šablonou „Doma – 2 dospělí a dítě 11–13 let“ nebo „Výlety a
+  sport“. Šablona je upravitelný návrh, ne zdravotní ani právní
+  standard. Přípravky jsou jen obecné kategorie bez cílové zásoby —
+  název, sílu a formu doplň podle skutečné krabičky; aplikace neposuzuje
+  vhodnost léku ani dávkování.
+- **Průvodce kontrolou** (`/Polozky/Kontrola?id=…`, tlačítko
+  „Zkontrolovat sadu“ na detailu i na stránce po přiložení telefonu):
+  jeden krok na skupinu, u každé položky skutečný počet a nejbližší
+  expirace, poslední krok potvrzení a datum další kontroly (výchozí za
+  6 měsíců). Tlačítko „Vše v této skupině je v plném stavu“ doplní
+  cílové počty. Bez JavaScriptu je průvodce jedna dlouhá stránka.
+- **Stav sady** se vždy počítá ze zapsaných zásob (`Services/StavSady.cs`):
+  chybí, co je pod cílovou zásobou nebo není spočítané; prošlé a brzy
+  expirující (60 dní) se hlásí zvlášť. Potvrzení kontroly neúplnou sadu
+  úplnou neudělá.
+- Každá kontrola se uloží do historie (`KontrolySady`) se souhrnem
+  nálezů a nastaví plánovaný termín druhu „Kontrola“, který se u sady
+  první pomoci hlídá v přehledu vždy.
 
 ### Specializace předmětu
 

@@ -18,6 +18,7 @@ public class ZalohaData
     public List<Polozka> Polozky { get; set; } = [];
     public List<ServisniZaznam> ServisniZaznamy { get; set; } = [];
     public List<Termin> Terminy { get; set; } = [];
+    public List<KontrolaSady> KontrolySady { get; set; } = [];
     public List<Pojisteni> Pojisteni { get; set; } = [];
     public List<Lek> Leky { get; set; } = [];
     public List<LekovyKatalog> LekovyKatalog { get; set; } = [];
@@ -30,7 +31,8 @@ public class ZalohaData
         ("Servisní záznamy", ServisniZaznamy.Count),
         ("Plánované termíny", Terminy.Count),
         ("Pojištění", Pojisteni.Count),
-        ("Léky a prostředky", Leky.Count),
+        ("Léky, prostředky a vybavení sad", Leky.Count),
+        ("Kontroly sad první pomoci", KontrolySady.Count),
         ("Katalog léků SÚKL", LekovyKatalog.Count)
     ];
 }
@@ -58,6 +60,7 @@ public static class Zaloha
         Polozky = await db.Polozky.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct),
         ServisniZaznamy = await db.ServisniZaznamy.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct),
         Terminy = await db.Terminy.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct),
+        KontrolySady = await db.KontrolySady.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct),
         Pojisteni = await db.Pojisteni.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct),
         Leky = await db.Leky.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct),
         LekovyKatalog = await db.LekovyKatalog.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct)
@@ -107,11 +110,12 @@ public static class Zaloha
         foreach (var p in data.Polozky)
         {
             (p.Kategorie, p.Mistnost, p.Kontejner) = (null, null, null);
-            (p.Obsah, p.Leky, p.ServisniZaznamy, p.Pojisteni, p.Terminy) = ([], [], [], [], []);
+            (p.Obsah, p.Leky, p.ServisniZaznamy, p.Pojisteni, p.Terminy, p.Kontroly) = ([], [], [], [], [], []);
         }
 
         data.ServisniZaznamy.ForEach(s => s.Polozka = null);
         data.Terminy.ForEach(t => t.Polozka = null);
+        data.KontrolySady.ForEach(k => k.Polozka = null);
         data.Pojisteni.ForEach(i => i.Polozka = null);
         data.Leky.ForEach(l => l.Lekarnicka = null);
 
@@ -167,6 +171,7 @@ public static class Zaloha
         Duplicity("Položky", data.Polozky, x => x.Id);
         Duplicity("Servisní záznamy", data.ServisniZaznamy, x => x.Id);
         Duplicity("Termíny", data.Terminy, x => x.Id);
+        Duplicity("Kontroly sad", data.KontrolySady, x => x.Id);
         Duplicity("Pojištění", data.Pojisteni, x => x.Id);
         Duplicity("Léky", data.Leky, x => x.Id);
         Duplicity("Katalog léků", data.LekovyKatalog, x => x.Id);
@@ -219,6 +224,7 @@ public static class Zaloha
 
         Vazba("Servisní záznam", data.ServisniZaznamy.Select(s => (s.Id, s.PolozkaId)));
         Vazba("Termín", data.Terminy.Select(t => (t.Id, t.PolozkaId)));
+        Vazba("Kontrola sady", data.KontrolySady.Select(k => (k.Id, k.PolozkaId)));
         Vazba("Pojištění", data.Pojisteni.Select(i => (i.Id, i.PolozkaId)));
         Vazba("Lék", data.Leky.Select(l => (l.Id, l.LekarnickaId)));
 
@@ -257,6 +263,7 @@ public static class Zaloha
         await db.Leky.ExecuteDeleteAsync(ct);
         await db.ServisniZaznamy.ExecuteDeleteAsync(ct);
         await db.Terminy.ExecuteDeleteAsync(ct);
+        await db.KontrolySady.ExecuteDeleteAsync(ct);
         await db.Pojisteni.ExecuteDeleteAsync(ct);
         await db.Polozky.ExecuteDeleteAsync(ct);
         await db.Mistnosti.ExecuteDeleteAsync(ct);
@@ -280,6 +287,7 @@ public static class Zaloha
 
         db.ServisniZaznamy.AddRange(data.ServisniZaznamy);
         db.Terminy.AddRange(data.Terminy);
+        db.KontrolySady.AddRange(data.KontrolySady);
         db.Pojisteni.AddRange(data.Pojisteni);
         db.Leky.AddRange(data.Leky);
         await db.SaveChangesAsync(ct);

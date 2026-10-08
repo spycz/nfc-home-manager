@@ -334,3 +334,23 @@ textarea {
         font-size: 0.9rem;
     }
 }
+
+/* Atribut hidden musi vyhrat i nad .btn { display: ... } - pouziva ho pruvodce. */
+[hidden] {
+    display: none !important;
+}
+
+.wizard-step {
+    border: 1px solid var(--border, #d4d4d8);
+}
+
+.wizard-step legend {
+    font-weight: 600;
+    padding: 0 0.4rem;
+}
+
+.check-item {
+    border-top: 1px solid var(--border, #d4d4d8);
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+}

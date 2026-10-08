@@ -45,6 +45,17 @@
         <input id="@Html.IdFor(m => m.Jednotka)" type="text" asp-for="Jednotka" placeholder="ks, balení…" />
     </div>
     <div class="field">
+        <label for="@Html.IdFor(m => m.CilovaZasoba)">Cílová zásoba (kolik má být)</label>
+        <input id="@Html.IdFor(m => m.CilovaZasoba)" type="number" step="0.01" min="0" asp-for="CilovaZasoba" placeholder="prázdné = volitelné" />
+    </div>
+    <div class="field">
+        <label for="@Html.IdFor(m => m.Skupina)">Skupina</label>
+        <input id="@Html.IdFor(m => m.Skupina)" type="text" asp-for="Skupina" placeholder="Rány, Obvazy, Pomůcky, Přípravky…" />
+    </div>
+    <div class="field">
+        <label><input type="checkbox" asp-for="KontrolovatObal" /> sterilní – při kontrole ověřit neporušený obal</label>
+    </div>
+    <div class="field">
         <label for="@Html.IdFor(m => m.Expirace)">Expirace</label>
         <input id="@Html.IdFor(m => m.Expirace)" type="date" asp-for="Expirace" />
     </div>

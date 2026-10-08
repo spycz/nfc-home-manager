@@ -97,6 +97,9 @@ public class Polozka
     public List<ServisniZaznam> ServisniZaznamy { get; set; } = [];
     public List<Pojisteni> Pojisteni { get; set; } = [];
 
+    // Provedene kontroly sady prvni pomoci (Rezim == PrvniPomoc).
+    public List<KontrolaSady> Kontroly { get; set; } = [];
+
     // Pristi planovane terminy - kazdy druh (servis, STK, revize...) zvlast.
     public List<Termin> Terminy { get; set; } = [];
 

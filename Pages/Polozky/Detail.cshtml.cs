@@ -227,6 +227,9 @@ public class DetailModel(AppDbContext db) : PageModel
             Ean = NovyLek.Ean,
             Mnozstvi = NovyLek.Mnozstvi,
             Jednotka = NovyLek.Jednotka,
+            CilovaZasoba = NovyLek.CilovaZasoba,
+            Skupina = string.IsNullOrWhiteSpace(NovyLek.Skupina) ? null : NovyLek.Skupina.Trim(),
+            KontrolovatObal = NovyLek.KontrolovatObal,
             NaCoJe = NovyLek.NaCoJe,
             ProKoho = NovyLek.ProKoho,
             NaPredpis = NovyLek.NaPredpis,
@@ -237,6 +240,30 @@ public class DetailModel(AppDbContext db) : PageModel
             Poznamka = NovyLek.Poznamka
         });
 
+        return await UlozitJednouAsync(operaceId, id, ct);
+    }
+
+    // Naplni prazdnou sadu prvni pomoci vybavenim ze sablony (SablonySady).
+    // Skutecne zasoby zustavaji nezname - spocitaji se pri prvni kontrole.
+    public async Task<IActionResult> OnPostZalozitZeSablonyAsync(int id, string? sablona, Guid operaceId, CancellationToken ct)
+    {
+        if (await OpakovaneOdeslaniAsync(operaceId, ct) is { } opakovane)
+        {
+            return opakovane;
+        }
+
+        if (!await NacistPolozkuAsync(id, ct))
+        {
+            return NotFound();
+        }
+
+        if (Polozka.Rezim != NfcRezim.PrvniPomoc || !Polozka.Aktivni || Polozka.Leky.Count > 0 ||
+            SablonySady.Najit(sablona) is not { } vybrana)
+        {
+            return BadRequest();
+        }
+
+        db.Leky.AddRange(vybrana.Polozky.Select(p => SablonySady.Vytvorit(p, id)));
         return await UlozitJednouAsync(operaceId, id, ct);
     }
 
@@ -434,6 +461,7 @@ public class DetailModel(AppDbContext db) : PageModel
             .Include(p => p.Leky.OrderBy(l => l.Expirace))
             .Include(p => p.ServisniZaznamy.OrderByDescending(s => s.Datum))
             .Include(p => p.Terminy.OrderBy(t => t.DatumDo))
+            .Include(p => p.Kontroly.OrderByDescending(k => k.Datum).ThenByDescending(k => k.Id).Take(5))
             .Include(p => p.Pojisteni.OrderByDescending(i => i.PlatnostDo))
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
@@ -529,6 +557,14 @@ public class NovyLekInput
 
     [StringLength(20)]
     public string? Jednotka { get; set; }
+
+    [Range(0, 1_000_000)]
+    public decimal? CilovaZasoba { get; set; }
+
+    [StringLength(50)]
+    public string? Skupina { get; set; }
+
+    public bool KontrolovatObal { get; set; }
 
     [StringLength(200)]
     public string? NaCoJe { get; set; }

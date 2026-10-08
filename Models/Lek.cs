@@ -1,8 +1,8 @@
 namespace NfcHomeManager.Models;
 
-// Jedna polozka v lekarnicce (Polozka.Rezim == Lekarnicka): lek nebo
-// zdravotnicky prostredek (naplast, obvaz...), ktery lekem neni, ale
-// v evidenci lekarnicky/prvni pomoci ma byt taky.
+// Jedna polozka v lekarnicce nebo v sade prvni pomoci (Polozka.Rezim ==
+// Lekarnicka / PrvniPomoc): lek nebo zdravotnicky prostredek (naplast,
+// obvaz...), ktery lekem neni, ale v evidenci ma byt taky.
 public class Lek
 {
     public int Id { get; set; }
@@ -18,6 +18,16 @@ public class Lek
 
     public decimal? Mnozstvi { get; set; }
     public string? Jednotka { get; set; }
+
+    // Kolik ma v sade byt. Null = volitelna polozka, pri kontrole nikdy "nechybi".
+    // Skutecna zasoba (Mnozstvi) null = jeste nespocitano.
+    public decimal? CilovaZasoba { get; set; }
+
+    // Skupina v sade (Rany, Obvazy, Pomucky...) - krok pruvodce kontrolou.
+    public string? Skupina { get; set; }
+
+    // Sterilni material: pri kontrole overit i neporuseny obal.
+    public bool KontrolovatObal { get; set; }
 
     public string? NaCoJe { get; set; }
     public string? ProKoho { get; set; }

@@ -34,8 +34,9 @@ public static class PolozkaPravidla
             .OrderBy(p => p.Nazev)
             .ToListAsync(ct);
 
-    // Rezimy, ke kterym lze pridavat leky/prostredky (Polozka.Leky).
-    public static bool MuzeMitLeky(NfcRezim rezim) => rezim is NfcRezim.Lekarnicka;
+    // Rezimy, ke kterym lze pridavat leky/prostredky (Polozka.Leky): lekarnicka
+    // a sada prvni pomoci (jeji vybaveni s cilovou zasobou).
+    public static bool MuzeMitLeky(NfcRezim rezim) => rezim is NfcRezim.Lekarnicka or NfcRezim.PrvniPomoc;
 
     // Nejvyssi povolene mnozstvi - shodne s [Range] ve formularich.
     public const decimal MaxMnozstvi = 1_000_000;
@@ -76,7 +77,7 @@ public static class PolozkaPravidla
 
             if (!MuzeMitLeky(input.Rezim) && await db.Leky.AnyAsync(l => l.LekarnickaId == id, ct))
             {
-                modelState.AddModelError("Input.Rezim", "Lékárnička obsahuje léky. Nejdřív je odeber, pak změň druh.");
+                modelState.AddModelError("Input.Rezim", "Položka obsahuje léky nebo vybavení sady. Nejdřív je odeber, pak změň druh.");
             }
         }
     }

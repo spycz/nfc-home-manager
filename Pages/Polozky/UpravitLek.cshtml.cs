@@ -28,6 +28,9 @@ public class UpravitLekModel(AppDbContext db) : PageModel
             Ean = lek.Ean,
             Mnozstvi = lek.Mnozstvi,
             Jednotka = lek.Jednotka,
+            CilovaZasoba = lek.CilovaZasoba,
+            Skupina = lek.Skupina,
+            KontrolovatObal = lek.KontrolovatObal,
             NaCoJe = lek.NaCoJe,
             ProKoho = lek.ProKoho,
             NaPredpis = lek.NaPredpis,
@@ -58,6 +61,9 @@ public class UpravitLekModel(AppDbContext db) : PageModel
         lek.Ean = Input.Ean;
         lek.Mnozstvi = Input.Mnozstvi;
         lek.Jednotka = Input.Jednotka;
+        lek.CilovaZasoba = Input.CilovaZasoba;
+        lek.Skupina = string.IsNullOrWhiteSpace(Input.Skupina) ? null : Input.Skupina.Trim();
+        lek.KontrolovatObal = Input.KontrolovatObal;
         lek.NaCoJe = Input.NaCoJe;
         lek.ProKoho = Input.ProKoho;
         lek.NaPredpis = Input.NaPredpis;

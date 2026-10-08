@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Polozka> Polozky => Set<Polozka>();
     public DbSet<ServisniZaznam> ServisniZaznamy => Set<ServisniZaznam>();
     public DbSet<Termin> Terminy => Set<Termin>();
+    public DbSet<KontrolaSady> KontrolySady => Set<KontrolaSady>();
     public DbSet<ProvedenaOperace> ProvedeneOperace => Set<ProvedenaOperace>();
     public DbSet<Pojisteni> Pojisteni => Set<Pojisteni>();
     public DbSet<Lek> Leky => Set<Lek>();
@@ -47,6 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Lek>(entity =>
         {
             entity.Property(l => l.Mnozstvi).HasColumnType("decimal(18,3)");
+            entity.Property(l => l.CilovaZasoba).HasColumnType("decimal(18,3)");
 
             entity.HasOne(l => l.Lekarnicka)
                 .WithMany(p => p.Leky)
@@ -74,6 +76,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(t => t.Polozka)
                 .WithMany(p => p.Terminy)
                 .HasForeignKey(t => t.PolozkaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KontrolaSady>(entity =>
+        {
+            entity.Ignore(k => k.Uplna);
+
+            entity.HasOne(k => k.Polozka)
+                .WithMany(p => p.Kontroly)
+                .HasForeignKey(k => k.PolozkaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

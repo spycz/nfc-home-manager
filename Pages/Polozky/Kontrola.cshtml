@@ -1,0 +1,83 @@
+@page
+@model NfcHomeManager.Pages.Polozky.KontrolaModel
+@using NfcHomeManager.Services
+@{
+    ViewData["Title"] = "Kontrola sady";
+    var pocetKroku = Model.Kroky.Count + 1;
+    var dnes = DateOnly.FromDateTime(DateTime.Today);
+}
+
+<h1>Kontrola sady: @Model.Sada.Nazev</h1>
+<p class="muted">Projdi sadu po skupinách a zapiš, kolik kusů v ní opravdu je a kdy expirují. Prázdné množství znamená „nespočítáno“.</p>
+
+<form method="post" data-wizard>
+    <partial name="_OperaceId" />
+    <input type="hidden" name="id" value="@Model.Sada.Id" />
+    <div asp-validation-summary="All" class="alert alert--error"></div>
+
+    @for (var krok = 0; krok < Model.Kroky.Count; krok++)
+    {
+        var (skupina, indexy) = Model.Kroky[krok];
+        <fieldset class="card wizard-step" data-wizard-step>
+            <legend>Krok @(krok + 1) z @pocetKroku: @skupina</legend>
+            <button type="button" class="btn btn--secondary" data-wizard-fill>Vše v této skupině je v plném stavu</button>
+
+            @foreach (var i in indexy)
+            {
+                var lek = Model.Vybaveni[Model.Radky[i].Id];
+                var prosle = lek.Expirace is { } e && e < dnes;
+                <div class="check-item">
+                    <input type="hidden" asp-for="Radky[i].Id" />
+                    <p>
+                        <strong>@lek.Nazev</strong>
+                        <span class="muted">· @(lek.CilovaZasoba is { } cil ? $"má být {cil:0.##} {lek.Jednotka}" : "volitelné")</span>
+                        @if (prosle)
+                        {
+                            <span class="badge badge--overdue">prošlé</span>
+                        }
+                    </p>
+                    @if (lek.KontrolovatObal)
+                    {
+                        <p class="muted">Sterilní: zkontroluj neporušený obal. Poškozené kusy nepočítej.</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(lek.Poznamka))
+                    {
+                        <p class="muted">@lek.Poznamka</p>
+                    }
+                    <div class="form-grid">
+                        <div class="field">
+                            <label asp-for="Radky[i].Mnozstvi">Skutečně v sadě (@(string.IsNullOrWhiteSpace(lek.Jednotka) ? "ks" : lek.Jednotka))</label>
+                            <input type="number" step="0.01" min="0" inputmode="decimal" asp-for="Radky[i].Mnozstvi"
+                                   data-wizard-target="@(lek.CilovaZasoba?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" />
+                            <span asp-validation-for="Radky[i].Mnozstvi" class="muted" style="color:var(--danger);"></span>
+                        </div>
+                        <div class="field">
+                            <label asp-for="Radky[i].Expirace">Nejbližší expirace</label>
+                            <input type="date" asp-for="Radky[i].Expirace" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </fieldset>
+    }
+
+    <fieldset class="card wizard-step" data-wizard-step>
+        <legend>Krok @pocetKroku z @pocetKroku: Potvrzení</legend>
+        <p class="muted">Po potvrzení se uloží zapsané zásoby a expirace a vyhodnotí se, co chybí nebo je prošlé. Neúplná sada zůstane označená jako neúplná, dokud ji nedoplníš.</p>
+        <div class="form-grid">
+            <div class="field">
+                <label asp-for="DalsiKontrola">Další kontrola do *</label>
+                <input type="date" asp-for="DalsiKontrola" required />
+                <span asp-validation-for="DalsiKontrola" class="muted" style="color:var(--danger);"></span>
+            </div>
+        </div>
+        <div class="field">
+            <label asp-for="Poznamka">Poznámka ke kontrole</label>
+            <textarea asp-for="Poznamka"></textarea>
+        </div>
+        <div class="actions">
+            <button class="btn" type="submit">Potvrdit kontrolu</button>
+            <a class="btn btn--secondary" href="/Polozky/Detail?id=@Model.Sada.Id">Zrušit</a>
+        </div>
+    </fieldset>
+</form>

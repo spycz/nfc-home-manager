@@ -1,6 +1,7 @@
 @page
 @model NfcHomeManager.Pages.Polozky.DetailModel
 @using NfcHomeManager.Models
+@using NfcHomeManager.Services
 @{
     ViewData["Title"] = Model.Polozka.Nazev;
 
@@ -221,6 +222,139 @@ else
             <button class="btn" type="submit">Přidat do obsahu</button>
         </form>
         <p class="muted">Předmět jde po přidání dále doplnit (výrobce, sériové číslo, kategorie…) na jeho vlastní stránce.</p>
+    </div>
+}
+
+@if (Model.Polozka.Rezim == NfcRezim.PrvniPomoc)
+{
+    var dnesSada = DateOnly.FromDateTime(DateTime.Today);
+    var stavSady = StavSady.Vyhodnotit(Model.Polozka.Leky, dnesSada);
+    var posledniKontrola = Model.Polozka.Kontroly.FirstOrDefault();
+    var dalsiKontrola = Model.Polozka.Terminy.FirstOrDefault(t => t.Typ == TerminTyp.Kontrola);
+    <div class="card">
+        <h2>Vybavení sady první pomoci</h2>
+
+        @if (stavSady.Celkem == 0)
+        {
+            <p class="muted">Sada zatím nemá žádné vybavení. Založ ho ze šablony a pak ho při první kontrole spočítej, nebo přidej položky ručně níže.</p>
+            <form method="post" asp-page-handler="ZalozitZeSablony">
+                <partial name="_OperaceId" />
+                <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                <div class="field">
+                    <label for="sablona">Šablona</label>
+                    <select id="sablona" name="sablona">
+                        @foreach (var sablona in SablonySady.Vse)
+                        {
+                            <option value="@sablona.Klic">@sablona.Nazev (@sablona.Polozky.Length položek)</option>
+                        }
+                    </select>
+                </div>
+                <button class="btn" type="submit">Založit vybavení ze šablony</button>
+            </form>
+            <p class="muted">Šablona je upravitelný návrh, ne zdravotní ani právní standard. Přípravky jsou jen obecné kategorie — název, sílu a formu doplň podle skutečných krabiček.</p>
+        }
+        else
+        {
+            <p>
+                <span class="badge @(stavSady.Uplna ? "badge--ok" : "badge--overdue")">@(stavSady.Uplna ? "Sada je úplná" : "Sada není úplná")</span>
+                @if (stavSady.Chybi.Count > 0)
+                {
+                    <text> chybí @stavSady.Chybi.Count z @stavSady.Celkem</text>
+                }
+                @if (stavSady.Prosle.Count > 0)
+                {
+                    <text> · prošlé: @stavSady.Prosle.Count</text>
+                }
+                @if (stavSady.BrzyExpiruje.Count > 0)
+                {
+                    <text> · brzy expiruje: @stavSady.BrzyExpiruje.Count</text>
+                }
+            </p>
+            <p class="muted">
+                Poslední kontrola: @(posledniKontrola?.Datum.ToString("d.M.yyyy") ?? "zatím žádná")
+                · další do: @(dalsiKontrola?.DatumDo.ToString("d.M.yyyy") ?? "nenastaveno")
+            </p>
+            <div class="actions">
+                <a class="btn" href="/Polozky/Kontrola?id=@Model.Polozka.Id">Zkontrolovat sadu</a>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Položka</th>
+                        <th>Zásoba / cíl</th>
+                        <th>Expirace</th>
+                        <th>Stav</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (skupina, polozkySkupiny) in StavSady.PoSkupinach(Model.Polozka.Leky))
+                    {
+                        <tr><th colspan="5">@skupina</th></tr>
+                        @foreach (var l in polozkySkupiny)
+                        {
+                            var stavPolozky = StavSady.Vyhodnotit(l, dnesSada);
+                            <tr>
+                                <td>
+                                    @l.Nazev
+                                    @if (!string.IsNullOrWhiteSpace(l.Poznamka))
+                                    {
+                                        <div class="muted">@l.Poznamka</div>
+                                    }
+                                </td>
+                                <td>
+                                    @(l.Mnozstvi?.ToString("0.##") ?? "?") / @(l.CilovaZasoba?.ToString("0.##") ?? "volitelné") @l.Jednotka
+                                </td>
+                                <td>@(l.Expirace?.ToString("d.M.yyyy") ?? "—")</td>
+                                <td>
+                                    <span class="badge @(stavPolozky is StavVybaveni.VPoradku ? "badge--ok" : "badge--overdue")">@(stavPolozky switch
+                                    {
+                                        StavVybaveni.Prosle => "prošlé",
+                                        StavVybaveni.Chybi => l.Mnozstvi is null ? "nespočítáno" : "chybí",
+                                        StavVybaveni.BrzyExpiruje => "brzy expiruje",
+                                        _ => "v pořádku"
+                                    })</span>
+                                </td>
+                                <td>
+                                    <a class="btn btn--secondary" href="/Polozky/UpravitLek?id=@l.Id">Upravit</a>
+                                    <form method="post" asp-page-handler="SmazatLek" data-confirm="Odebrat položku ze sady?">
+                                        <input type="hidden" name="id" value="@Model.Polozka.Id" />
+                                        <input type="hidden" name="lekId" value="@l.Id" />
+                                        <button class="btn btn--secondary" type="submit">Odebrat</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            @if (Model.Polozka.Kontroly.Count > 0)
+            {
+                <h3>Historie kontrol</h3>
+                <table>
+                    <tbody>
+                        @foreach (var k in Model.Polozka.Kontroly)
+                        {
+                            <tr>
+                                <td>@k.Datum.ToString("d.M.yyyy")</td>
+                                <td><span class="badge @(k.Uplna ? "badge--ok" : "badge--overdue")">@(k.Uplna ? "úplná" : "neúplná")</span></td>
+                                <td>@(string.IsNullOrWhiteSpace(k.Souhrn) ? "Bez nálezu." : k.Souhrn) @k.Poznamka</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+
+        <h3>Přidat vlastní položku</h3>
+        <form method="post" asp-page-handler="PridatLek">
+            <partial name="_OperaceId" />
+            <input type="hidden" name="id" value="@Model.Polozka.Id" />
+            <partial name="_LekFormFields" for="NovyLek" />
+            <button class="btn" type="submit">Přidat</button>
+        </form>
     </div>
 }
 
